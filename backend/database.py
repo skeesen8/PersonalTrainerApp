@@ -6,12 +6,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Use SQLite for development
-SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
+# Get the DATABASE_URL from environment variables
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./sql_app.db")
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# Modify the URL if it's a PostgreSQL URL from Railway (they use postgres://, but SQLAlchemy needs postgresql://)
+if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Create engine (remove check_same_thread for PostgreSQL)
+if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(SQLALCHEMY_DATABASE_URL)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
