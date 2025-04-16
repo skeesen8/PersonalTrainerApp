@@ -38,7 +38,7 @@ A full-stack web application for managing workout plans and meal plans, built wi
 
 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/PersonalTrainerApp.git
+git clone https://github.com/skeesen8/PersonalTrainerApp.git
 cd PersonalTrainerApp
 ```
 
