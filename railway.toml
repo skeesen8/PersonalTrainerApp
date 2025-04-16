@@ -1,3 +1,12 @@
 [build]
-builder = "NIXPACKS"
-nixpacksConfigPath = "nixpacks.toml" 
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/docs"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+
+[deploy.envVars]
+DATABASE_URL = "${{ Postgres-af7H.DATABASE_URL }}"
+DATABASE_PUBLIC_URL = "${{ Postgres-af7H.DATABASE_PUBLIC_URL }}" 

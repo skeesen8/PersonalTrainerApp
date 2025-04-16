@@ -17,7 +17,18 @@ RUN pip install -r requirements.txt
 COPY backend/ backend/
 
 # Set environment variables
-ENV PORT=8000
+ENV PYTHONUNBUFFERED=1
+
+# Make sure the DATABASE_URL is available at runtime
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL}
+
+# Set the working directory to backend
+WORKDIR /app/backend
+
+# Create a shell script to start the application
+RUN echo '#!/bin/bash\nuvicorn main:app --host 0.0.0.0 --port "${PORT:-8080}"' > start.sh && \
+    chmod +x start.sh
 
 # Command to run the application
-CMD cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT 
+CMD ["./start.sh"] 
