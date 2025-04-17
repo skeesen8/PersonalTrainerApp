@@ -15,14 +15,18 @@ import {
   FormControlLabel,
   Checkbox,
 } from '@mui/material';
-import axios from 'axios';
+import api from '../api/axios';
 
 const API_URL = process.env.REACT_APP_API_URL?.trim() || 'http://localhost:8000';
 
 // Configure axios defaults
-axios.defaults.withCredentials = true;
+api.defaults.withCredentials = true;
 
-const Login: React.FC = () => {
+interface LoginProps {
+  onLogin: (token: string) => void;
+}
+
+const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -45,117 +49,41 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
     try {
-      console.log('Making login request to:', `${API_URL}/token`);
+      console.log('Making login request with:', { username: email, password });
       const formData = new URLSearchParams();
       formData.append('username', email);
       formData.append('password', password);
 
-      const response = await axios.post(`${API_URL}/token`, 
-        formData,
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          withCredentials: true
+      const response = await api.post('/token', formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
         }
-      );
-      console.log('Login response:', response.data);
-      localStorage.setItem('token', response.data.access_token);
-      
-      console.log('Fetching user data...');
-      const userResponse = await axios.get(`${API_URL}/users/me`, {
-        headers: { 
-          Authorization: `Bearer ${response.data.access_token}`,
-        },
-        withCredentials: true
       });
-      console.log('User data:', userResponse.data);
-      localStorage.setItem('user', JSON.stringify(userResponse.data));
-      
-      if (userResponse.data.is_admin) {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
+
+      if (response.data.access_token) {
+        onLogin(response.data.access_token);
       }
     } catch (err: any) {
-      console.error('Login error details:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        headers: err.response?.headers,
-        url: err.config?.url
-      });
-      if (err.response?.status === 400) {
-        setError('Invalid email or password');
-      } else if (err.response?.status === 401) {
-        setError('Unauthorized. Please check your credentials.');
-      } else if (err.message === 'Network Error') {
-        setError('Unable to connect to the server. Please try again later.');
-      } else {
-        setError(err.response?.data?.detail || 'An unexpected error occurred. Please try again.');
-      }
+      console.error('Login error:', err);
+      setError(err.response?.data?.detail || 'Failed to login');
     }
   };
 
   const handleRegister = async () => {
-    setRegisterError('');
     try {
-      console.log('Making registration request to:', `${API_URL}/users/`);
-      const registerResponse = await axios.post(`${API_URL}/users/`, {
-        email: registerData.email,
-        password: registerData.password,
-        full_name: registerData.full_name,
-        is_admin: registerData.is_admin,
-        admin_code: registerData.admin_code,
-      }, {
-        withCredentials: true
+      const response = await api.post('/users/', {
+        email,
+        password,
+        is_admin: false
       });
-      console.log('Registration successful:', registerResponse.data);
-
-      // Log in automatically after registration
-      const formData = new URLSearchParams();
-      formData.append('username', registerData.email);
-      formData.append('password', registerData.password);
-
-      const response = await axios.post(`${API_URL}/token`, 
-        formData,
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          withCredentials: true
-        }
-      );
-      
-      localStorage.setItem('token', response.data.access_token);
-      const userResponse = await axios.get(`${API_URL}/users/me`, {
-        headers: { 
-          Authorization: `Bearer ${response.data.access_token}`,
-        },
-        withCredentials: true
-      });
-      localStorage.setItem('user', JSON.stringify(userResponse.data));
-      
-      setOpenRegister(false);
-      navigate(userResponse.data.is_admin ? '/admin' : '/dashboard');
+      console.log('Registration successful:', response.data);
+      // Automatically log in after successful registration
+      handleSubmit(new Event('submit') as any);
     } catch (err: any) {
-      console.error('Registration error details:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
-        headers: err.response?.headers,
-        url: err.config?.url
-      });
-      if (err.response?.status === 400) {
-        setRegisterError('Email already registered or invalid input');
-      } else if (err.response?.status === 403) {
-        setRegisterError('Invalid admin code');
-      } else if (err.message === 'Network Error') {
-        setRegisterError('Unable to connect to the server. Please try again later.');
-      } else {
-        setRegisterError(err.response?.data?.detail || 'Registration failed. Please try again.');
-      }
+      console.error('Registration error:', err);
+      setError(err.response?.data?.detail || 'Failed to register');
     }
   };
 

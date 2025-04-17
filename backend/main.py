@@ -12,6 +12,7 @@ from dependencies import get_db
 import logging
 import os
 from dotenv import load_dotenv
+from starlette.responses import Response
 
 # Load environment variables
 load_dotenv()
@@ -31,32 +32,47 @@ app = FastAPI(
 logger.info("Starting application with configuration:")
 logger.info(f"Current working directory: {os.getcwd()}")
 
-# CORS middleware configuration - Allow all origins
+# CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
+async def add_cors_headers(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url}")
     logger.info(f"Request headers: {dict(request.headers)}")
-    logger.info(f"Origin: {request.headers.get('origin')}")
     
+    if request.method == "OPTIONS":
+        response = Response()
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PUT, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+        response.status_code = 200
+        return response
+        
     response = await call_next(request)
-    
-    # Ensure CORS headers are present
     response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PUT, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
     
     logger.info(f"Response status: {response.status_code}")
     logger.info(f"Response headers: {dict(response.headers)}")
-    
     return response
+
+@app.options("/{path:path}")
+async def options_route(path: str):
+    return PlainTextResponse(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, GET, DELETE, PUT, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type",
+        }
+    )
 
 @app.get("/")
 async def root():
