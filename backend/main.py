@@ -12,6 +12,7 @@ from dependencies import get_db
 import logging
 import os
 from dotenv import load_dotenv
+from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 
 # Load environment variables
@@ -36,9 +37,11 @@ logger.info(f"Current working directory: {os.getcwd()}")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,  # Must be False when allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 @app.middleware("http")
@@ -49,15 +52,16 @@ async def add_cors_headers(request: Request, call_next):
     if request.method == "OPTIONS":
         response = Response()
         response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PUT, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Max-Age"] = "3600"
         response.status_code = 200
         return response
         
     response = await call_next(request)
     response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PUT, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
     
     logger.info(f"Response status: {response.status_code}")
     logger.info(f"Response headers: {dict(response.headers)}")
@@ -69,8 +73,9 @@ async def options_route(path: str):
         status_code=200,
         headers={
             "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "POST, GET, DELETE, PUT, OPTIONS",
-            "Access-Control-Allow-Headers": "Authorization, Content-Type",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "3600",
         }
     )
 
