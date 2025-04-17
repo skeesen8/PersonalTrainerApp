@@ -20,7 +20,7 @@ app = FastAPI(title="Personal Trainer API")
 # Get allowed origins from environment or use defaults
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:8000,https://*.railway.app"
+    "http://localhost:3000,http://localhost:8000,https://*.vercel.app,https://*.railway.app"
 ).split(",")
 
 # CORS middleware configuration

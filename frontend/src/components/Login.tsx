@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -34,10 +34,15 @@ const Login: React.FC = () => {
   const [registerError, setRegisterError] = useState('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    console.log('Current API URL:', API_URL);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     try {
+      console.log('Attempting to connect to:', `${API_URL}/token`);
       const formData = new URLSearchParams();
       formData.append('username', email);
       formData.append('password', password);
@@ -60,8 +65,9 @@ const Login: React.FC = () => {
       } else {
         navigate('/dashboard');
       }
-    } catch (err) {
-      setError('Invalid email or password');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.response?.data?.detail || 'Failed to connect to the server. Please try again.');
     }
   };
 
