@@ -14,7 +14,7 @@ interface User {
   full_name: string;
 }
 
-const Dashboard = () => {
+const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}') as User;
 
