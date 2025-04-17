@@ -14,6 +14,7 @@ import os
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import Response
+from cors_config import setup_cors
 
 # Load environment variables
 load_dotenv()
@@ -30,19 +31,11 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
+# Setup CORS
+setup_cors(app)
+
 logger.info("Starting application with configuration:")
 logger.info(f"Current working directory: {os.getcwd()}")
-
-# CORS middleware configuration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,  # Must be False when allow_origins=["*"]
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=3600,
-)
 
 @app.middleware("http")
 async def add_cors_headers(request: Request, call_next):
@@ -112,10 +105,12 @@ async def startup_event():
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 @app.post("/token")
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    logger.info(f"Login attempt for user: {form_data.username}")
     with get_db() as db:
         user = crud.authenticate_user(db, form_data.username, form_data.password)
         if user is None:
+            logger.warning(f"Authentication failed for user: {form_data.username}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
@@ -125,6 +120,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
         access_token = create_access_token(
             data={"sub": user.email}, expires_delta=access_token_expires
         )
+        logger.info(f"Login successful for user: {form_data.username}")
         return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/users/me", response_model=schemas.User)
@@ -132,22 +128,27 @@ def read_users_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
 @app.post("/users/", response_model=schemas.User)
-def create_user(user: schemas.UserCreate):
+async def create_user(user: schemas.UserCreate):
+    logger.info(f"Creating new user with email: {user.email}")
     with get_db() as db:
         db_user = crud.get_user_by_email(db, email=user.email)
         if db_user:
+            logger.warning(f"Email already registered: {user.email}")
             raise HTTPException(status_code=400, detail="Email already registered")
         
         # Check admin code if user is requesting admin privileges
         if user.is_admin:
             ADMIN_CODE = "admin123"  # In production, use environment variable
             if not user.admin_code or user.admin_code != ADMIN_CODE:
+                logger.warning(f"Invalid admin code attempt for user: {user.email}")
                 raise HTTPException(
                     status_code=403,
                     detail="Invalid admin code"
                 )
         
-        return crud.create_user(db=db, user=user)
+        created_user = crud.create_user(db=db, user=user)
+        logger.info(f"Successfully created user: {user.email}")
+        return created_user
 
 @app.get("/workout-plans/", response_model=List[schemas.WorkoutPlan])
 def read_workout_plans(
