@@ -12,5 +12,5 @@ numReplicas = 1
 [deploy.envVars]
 DATABASE_URL = "${{ Postgres-af7H.DATABASE_URL }}"
 DATABASE_PUBLIC_URL = "${{ Postgres-af7H.DATABASE_PUBLIC_URL }}"
-ALLOWED_ORIGINS = "http://localhost:3000,https://personal-trainer-app-topaz.vercel.app"
+ALLOWED_ORIGINS = "https://personal-trainer-app-topaz.vercel.app"
 PORT = "8080" 
