@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+build/
+
+# Environment files
+.env
+.env.*
+
+# System files
+.DS_Store
+*.log
+
+# IDE files
+.idea/
+.vscode/
+
+# Git files
+.git/
+.gitignore
+
+# Docker files
+Dockerfile
+.dockerignore
+
+# Other configuration files
+railway.toml 
