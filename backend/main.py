@@ -28,49 +28,30 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
-# Get allowed origins from environment
-allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,https://personal-trainer-app-topaz.vercel.app")
-ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins_str.split(",")]
-
-# Add debug logging
-logger.info(f"Starting application with configuration:")
+logger.info("Starting application with configuration:")
 logger.info(f"Current working directory: {os.getcwd()}")
-logger.info(f"Raw ALLOWED_ORIGINS env var: {allowed_origins_str}")
-logger.info(f"Processed ALLOWED_ORIGINS: {ALLOWED_ORIGINS}")
-logger.info(f"Port: {os.getenv('PORT', '8080')}")
 
-# CORS middleware configuration
+# CORS middleware configuration - Allow all origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["*"],  # Allow all origins
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=3600,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
 )
 
 @app.middleware("http")
-async def cors_middleware(request: Request, call_next):
+async def log_requests(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url}")
     logger.info(f"Request headers: {dict(request.headers)}")
-    origin = request.headers.get("origin")
-    logger.info(f"Request origin: {origin}")
-    
-    if origin in ALLOWED_ORIGINS:
-        logger.info(f"Origin {origin} is allowed")
-    else:
-        logger.warning(f"Origin {origin} is not in allowed origins: {ALLOWED_ORIGINS}")
+    logger.info(f"Origin: {request.headers.get('origin')}")
     
     response = await call_next(request)
     
-    # Add CORS headers manually for more control
-    if origin in ALLOWED_ORIGINS:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Access-Control-Max-Age"] = "3600"
+    # Ensure CORS headers are present
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
     
     logger.info(f"Response status: {response.status_code}")
     logger.info(f"Response headers: {dict(response.headers)}")
