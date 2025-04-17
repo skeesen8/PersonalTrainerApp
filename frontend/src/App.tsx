@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Login from './components/Login';
@@ -27,19 +27,26 @@ const theme = createTheme({
   },
 });
 
-function App() {
+const App: React.FC = () => {
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+
+  const handleLogin = (newToken: string) => {
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
         <Routes>
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={
+            token ? <Navigate to="/dashboard" /> : <Login onLogin={handleLogin} />
+          } />
           <Route
             path="/dashboard"
             element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
+              token ? <Dashboard /> : <Navigate to="/login" />
             }
           />
           <Route
@@ -61,16 +68,14 @@ function App() {
           <Route
             path="/admin"
             element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
+              token ? <AdminDashboard /> : <Navigate to="/login" />
             }
           />
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
       </Router>
     </ThemeProvider>
   );
-}
+};
 
 export default App;
