@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy.orm import Session
 from typing import List
 import models, schemas, crud
@@ -11,59 +12,62 @@ from dependencies import get_db
 import logging
 import os
 from dotenv import load_dotenv
-from fastapi.responses import PlainTextResponse
 
 # Load environment variables
 load_dotenv()
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Personal Trainer API")
-
-# Add more detailed startup logging
-logger.info("Initializing FastAPI application")
-logger.info(f"Current working directory: {os.getcwd()}")
-logger.info(f"Environment variables: {dict(os.environ)}")
+# Create FastAPI app
+app = FastAPI(
+    title="Personal Trainer API",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
+)
 
 # Get allowed origins from environment
 allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
 ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins_str.split(",")]
 
 # Add debug logging
+logger.info(f"Starting application with configuration:")
+logger.info(f"Current working directory: {os.getcwd()}")
 logger.info(f"Raw ALLOWED_ORIGINS env var: {allowed_origins_str}")
 logger.info(f"Processed ALLOWED_ORIGINS: {ALLOWED_ORIGINS}")
+logger.info(f"Port: {os.getenv('PORT', '8080')}")
 
 # CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["*"],  # Temporarily allow all origins for testing
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=3600,
 )
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url}")
-    logger.info(f"Client host: {request.client.host}")
-    logger.info(f"Request headers: {request.headers}")
-    
-    # Log CORS-specific headers
-    origin = request.headers.get("origin")
-    logger.info(f"Request origin: {origin}")
-    logger.info(f"Is origin allowed? {origin in ALLOWED_ORIGINS if origin else False}")
+    logger.info(f"Request headers: {dict(request.headers)}")
     
     response = await call_next(request)
     
-    # Log response headers
     logger.info(f"Response status: {response.status_code}")
-    logger.info(f"Response headers: {response.headers}")
+    logger.info(f"Response headers: {dict(response.headers)}")
     
     return response
+
+@app.get("/")
+async def root():
+    return {"message": "Personal Trainer API is running"}
+
+@app.get("/_health")
+async def health_check():
+    logger.info("Health check endpoint called")
+    return {"status": "healthy"}
 
 @app.on_event("startup")
 async def startup_event():
@@ -173,9 +177,4 @@ def read_users(current_user: models.User = Depends(get_current_user)):
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Not authorized to view all users")
     with get_db() as db:
-        return crud.get_users(db)
-
-@app.get("/_health", response_class=PlainTextResponse)
-async def health_check():
-    logger.info("Health check endpoint called")
-    return "OK" 
+        return crud.get_users(db) 
