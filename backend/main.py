@@ -31,43 +31,54 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
-# Setup CORS
-setup_cors(app)
+# Configure CORS
+origins = [
+    "https://personal-trainer-app-topaz.vercel.app",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,
+)
 
 logger.info("Starting application with configuration:")
 logger.info(f"Current working directory: {os.getcwd()}")
 
 @app.middleware("http")
-async def add_cors_headers(request: Request, call_next):
+async def log_requests(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url}")
     logger.info(f"Request headers: {dict(request.headers)}")
+    logger.info(f"Origin: {request.headers.get('origin')}")
     
+    response = await call_next(request)
+    
+    # Add CORS headers for preflight requests
     if request.method == "OPTIONS":
-        response = Response()
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Methods"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Origin"] = request.headers.get("origin", "*")
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
         response.headers["Access-Control-Max-Age"] = "3600"
         response.status_code = 200
-        return response
-        
-    response = await call_next(request)
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "*"
     
     logger.info(f"Response status: {response.status_code}")
     logger.info(f"Response headers: {dict(response.headers)}")
     return response
 
 @app.options("/{path:path}")
-async def options_route(path: str):
-    return PlainTextResponse(
+async def options_route(request: Request, path: str):
+    return JSONResponse(
+        content={},
         status_code=200,
         headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "*",
-            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Origin": request.headers.get("origin", "*"),
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type",
             "Access-Control-Max-Age": "3600",
         }
     )
