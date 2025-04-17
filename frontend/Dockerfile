@@ -14,9 +14,11 @@ FROM node:18-slim
 
 WORKDIR /app
 
-# Copy server and built assets
+# Copy only what's needed to run the server
 COPY --from=build /app/build ./build
-COPY server.js .
+COPY --from=build /app/server.js .
+
+# No need for package.json since we're using built-in modules only
 
 ENV PORT=3000
 EXPOSE 3000
