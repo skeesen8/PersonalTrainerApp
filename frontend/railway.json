@@ -6,7 +6,8 @@
   "deploy": {
     "numReplicas": 1,
     "healthcheckPath": "/_health",
-    "healthcheckTimeout": 30,
-    "restartPolicyType": "ON_FAILURE"
+    "healthcheckTimeout": 60,
+    "restartPolicyType": "ON_FAILURE",
+    "startCommand": "npx serve -s build -l $PORT"
   }
 } 
