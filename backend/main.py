@@ -22,25 +22,41 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Personal Trainer API")
 
 # Get allowed origins from environment
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
-logger.info(f"Configured CORS with allowed origins: {ALLOWED_ORIGINS}")
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins_str.split(",")]
+
+# Add debug logging
+logger.info(f"Raw ALLOWED_ORIGINS env var: {allowed_origins_str}")
+logger.info(f"Processed ALLOWED_ORIGINS: {ALLOWED_ORIGINS}")
 
 # CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url}")
     logger.info(f"Client host: {request.client.host}")
-    logger.info(f"Headers: {request.headers}")
+    logger.info(f"Request headers: {request.headers}")
+    
+    # Log CORS-specific headers
+    origin = request.headers.get("origin")
+    logger.info(f"Request origin: {origin}")
+    logger.info(f"Is origin allowed? {origin in ALLOWED_ORIGINS if origin else False}")
+    
     response = await call_next(request)
+    
+    # Log response headers
     logger.info(f"Response status: {response.status_code}")
+    logger.info(f"Response headers: {response.headers}")
+    
     return response
 
 @app.on_event("startup")
