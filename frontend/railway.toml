@@ -1,0 +1,13 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+healthcheckPath = "/_health"
+healthcheckTimeout = 30
+healthcheckInterval = 15
+
+[deploy.envVars]
+NODE_ENV = "production"
+PORT = "3000" 

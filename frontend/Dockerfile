@@ -1,32 +1,36 @@
 # Build stage
-FROM node:16-alpine as build
+FROM node:18-alpine as build
 
 # Set working directory
 WORKDIR /app
 
 # Copy package files first for better caching
-COPY frontend/package*.json ./
+COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
 # Copy the frontend code
-COPY frontend/ ./
+COPY . .
 
 # Build the app
 RUN npm run build
 
 # Production stage
-FROM nginx:alpine
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install serve
+RUN npm install -g serve
 
 # Copy built assets from builder stage
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/build ./build
 
-# Add nginx configuration
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/ || exit 1
 
-# Expose port
-EXPOSE 80
-
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"] 
+# Start the app using the PORT environment variable
+CMD serve -s build -l ${PORT:-3000} 
