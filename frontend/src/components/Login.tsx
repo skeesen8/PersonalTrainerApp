@@ -39,7 +39,6 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     console.log('API URL:', API_URL);
-    // Log the current origin
     console.log('Current origin:', window.location.origin);
   }, []);
 
@@ -57,8 +56,8 @@ const Login: React.FC = () => {
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Origin': window.location.origin
-          }
+          },
+          withCredentials: true
         }
       );
       console.log('Login response:', response.data);
@@ -68,8 +67,8 @@ const Login: React.FC = () => {
       const userResponse = await axios.get(`${API_URL}/users/me`, {
         headers: { 
           Authorization: `Bearer ${response.data.access_token}`,
-          'Origin': window.location.origin
-        }
+        },
+        withCredentials: true
       });
       console.log('User data:', userResponse.data);
       localStorage.setItem('user', JSON.stringify(userResponse.data));
@@ -84,9 +83,18 @@ const Login: React.FC = () => {
         message: err.message,
         response: err.response?.data,
         status: err.response?.status,
-        headers: err.response?.headers
+        headers: err.response?.headers,
+        url: err.config?.url
       });
-      setError(err.response?.data?.detail || 'Failed to connect to the server. Please try again.');
+      if (err.response?.status === 400) {
+        setError('Invalid email or password');
+      } else if (err.response?.status === 401) {
+        setError('Unauthorized. Please check your credentials.');
+      } else if (err.message === 'Network Error') {
+        setError('Unable to connect to the server. Please try again later.');
+      } else {
+        setError(err.response?.data?.detail || 'An unexpected error occurred. Please try again.');
+      }
     }
   };
 
@@ -101,9 +109,7 @@ const Login: React.FC = () => {
         is_admin: registerData.is_admin,
         admin_code: registerData.admin_code,
       }, {
-        headers: {
-          'Origin': window.location.origin
-        }
+        withCredentials: true
       });
       console.log('Registration successful:', registerResponse.data);
 
@@ -117,8 +123,8 @@ const Login: React.FC = () => {
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Origin': window.location.origin
-          }
+          },
+          withCredentials: true
         }
       );
       
@@ -126,8 +132,8 @@ const Login: React.FC = () => {
       const userResponse = await axios.get(`${API_URL}/users/me`, {
         headers: { 
           Authorization: `Bearer ${response.data.access_token}`,
-          'Origin': window.location.origin
-        }
+        },
+        withCredentials: true
       });
       localStorage.setItem('user', JSON.stringify(userResponse.data));
       
@@ -138,9 +144,18 @@ const Login: React.FC = () => {
         message: err.message,
         response: err.response?.data,
         status: err.response?.status,
-        headers: err.response?.headers
+        headers: err.response?.headers,
+        url: err.config?.url
       });
-      setRegisterError(err.response?.data?.detail || 'Registration failed. Please try again.');
+      if (err.response?.status === 400) {
+        setRegisterError('Email already registered or invalid input');
+      } else if (err.response?.status === 403) {
+        setRegisterError('Invalid admin code');
+      } else if (err.message === 'Network Error') {
+        setRegisterError('Unable to connect to the server. Please try again later.');
+      } else {
+        setRegisterError(err.response?.data?.detail || 'Registration failed. Please try again.');
+      }
     }
   };
 
