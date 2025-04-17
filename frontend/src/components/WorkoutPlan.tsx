@@ -20,7 +20,7 @@ interface Exercise {
   rest: string;
 }
 
-interface WorkoutPlan {
+interface IWorkoutPlan {
   id: number;
   title: string;
   description: string;
@@ -29,7 +29,7 @@ interface WorkoutPlan {
 }
 
 const WorkoutPlan: React.FC = () => {
-  const [workoutPlan, setWorkoutPlan] = useState<WorkoutPlan | null>(null);
+  const [workoutPlan, setWorkoutPlan] = useState<IWorkoutPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 

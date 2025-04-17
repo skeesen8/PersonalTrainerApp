@@ -4,23 +4,50 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
 import models, schemas, crud
-from database import engine
+from database import engine, SessionLocal
 from datetime import timedelta
 from auth import create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
 from dependencies import get_db
+import logging
+import os
 
-models.Base.metadata.create_all(bind=engine)
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Personal Trainer API")
+
+# Get allowed origins from environment or use defaults
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://localhost:8000,https://*.railway.app"
+).split(",")
 
 # CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8000"],  # React frontend URL and Swagger UI
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("Starting up FastAPI application")
+    try:
+        # Test database connection
+        db = SessionLocal()
+        db.execute("SELECT 1")
+        db.close()
+        logger.info("Successfully connected to the database")
+        
+        # Create database tables
+        models.Base.metadata.create_all(bind=engine)
+        logger.info("Successfully created database tables")
+    except Exception as e:
+        logger.error(f"Error during startup: {str(e)}")
+        raise
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 

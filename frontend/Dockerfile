@@ -1,21 +1,36 @@
-FROM node:16-alpine
+# Build stage
+FROM node:18-alpine as build
 
+# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better caching
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy the rest of the frontend code
+# Copy the frontend code
 COPY . .
 
 # Build the app
 RUN npm run build
 
-# Install serve to run the built app
+# Production stage
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install serve
 RUN npm install -g serve
 
-# Command to serve the built app
-CMD serve -s build -l $PORT 
+# Copy built assets from builder stage
+COPY --from=build /app/build ./build
+
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/ || exit 1
+
+# Start the app using the PORT environment variable
+CMD serve -s build -l ${PORT:-3000} 

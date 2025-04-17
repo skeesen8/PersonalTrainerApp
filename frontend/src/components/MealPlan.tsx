@@ -20,7 +20,7 @@ interface Meal {
   calories: number;
 }
 
-interface MealPlan {
+interface IMealPlan {
   id: number;
   title: string;
   description: string;
@@ -29,7 +29,7 @@ interface MealPlan {
 }
 
 const MealPlan: React.FC = () => {
-  const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
+  const [mealPlan, setMealPlan] = useState<IMealPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
