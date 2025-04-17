@@ -29,7 +29,7 @@ app = FastAPI(
 )
 
 # Get allowed origins from environment
-allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,https://personal-trainer-app-topaz.vercel.app")
 ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins_str.split(",")]
 
 # Add debug logging
@@ -42,16 +42,19 @@ logger.info(f"Port: {os.getenv('PORT', '8080')}")
 # CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Temporarily allow all origins for testing
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url}")
     logger.info(f"Request headers: {dict(request.headers)}")
+    logger.info(f"Origin: {request.headers.get('origin')}")
     
     response = await call_next(request)
     
@@ -68,6 +71,10 @@ async def root():
 async def health_check():
     logger.info("Health check endpoint called")
     return {"status": "healthy"}
+
+@app.options("/token")
+async def token_preflight():
+    return PlainTextResponse(status_code=200)
 
 @app.on_event("startup")
 async def startup_event():
