@@ -20,27 +20,17 @@ COPY backend/ backend/
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8080
 
-# Make sure the DATABASE_URL is available at runtime
-ARG DATABASE_URL
-ENV DATABASE_URL=${DATABASE_URL}
-
 # Set the working directory to backend
 WORKDIR /app/backend
 
-# Create a health check file
-RUN echo "OK" > health.txt
+# Create a shell script to start the application
+RUN echo '#!/bin/bash\n\
+echo "Starting FastAPI application on port $PORT..."\n\
+exec uvicorn main:app --host 0.0.0.0 --port $PORT --log-level debug\
+' > start.sh && chmod +x start.sh
 
 # Expose the port
 EXPOSE 8080
-
-# Create a shell script to start the application
-RUN echo '#!/bin/bash\n\
-echo "Starting FastAPI application..."\n\
-echo "Port: $PORT"\n\
-echo "Database URL: ${DATABASE_URL}"\n\
-echo "Allowed Origins: ${ALLOWED_ORIGINS}"\n\
-uvicorn main:app --host 0.0.0.0 --port "${PORT:-8080}" --log-level debug\
-' > start.sh && chmod +x start.sh
 
 # Command to run the application
 CMD ["./start.sh"] 
