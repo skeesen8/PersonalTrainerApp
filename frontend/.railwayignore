@@ -1,5 +1,5 @@
 # Dependencies
-node_modules/
+node_modules
 
 # Build output
 build/
@@ -13,11 +13,11 @@ build/
 *.log
 
 # IDE files
-.idea/
-.vscode/
+.idea
+.vscode
 
 # Git files
-.git/
+.git
 .gitignore
 
 # Docker files
@@ -25,4 +25,9 @@ Dockerfile
 .dockerignore
 
 # Other configuration files
-railway.toml 
+railway.toml
+
+# Test files
+__tests__
+*.test.*
+*.spec.* 
