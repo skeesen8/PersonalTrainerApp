@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_URL = process.env.REACT_APP_API_URL?.trim() || 'http://localhost:8000';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -35,14 +35,14 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('Current API URL:', API_URL);
+    console.log('API URL:', API_URL);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     try {
-      console.log('Attempting to connect to:', `${API_URL}/token`);
+      console.log('Making login request to:', `${API_URL}/token`);
       const formData = new URLSearchParams();
       formData.append('username', email);
       formData.append('password', password);
@@ -53,20 +53,33 @@ const Login: React.FC = () => {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
+          withCredentials: true
         }
       );
+      console.log('Login response:', response.data);
       localStorage.setItem('token', response.data.access_token);
+      
+      console.log('Fetching user data...');
       const userResponse = await axios.get(`${API_URL}/users/me`, {
-        headers: { Authorization: `Bearer ${response.data.access_token}` },
+        headers: { 
+          Authorization: `Bearer ${response.data.access_token}`,
+        },
+        withCredentials: true
       });
+      console.log('User data:', userResponse.data);
       localStorage.setItem('user', JSON.stringify(userResponse.data));
+      
       if (userResponse.data.is_admin) {
         navigate('/admin');
       } else {
         navigate('/dashboard');
       }
     } catch (err: any) {
-      console.error('Login error:', err);
+      console.error('Login error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
       setError(err.response?.data?.detail || 'Failed to connect to the server. Please try again.');
     }
   };
@@ -74,14 +87,18 @@ const Login: React.FC = () => {
   const handleRegister = async () => {
     setRegisterError('');
     try {
+      console.log('Making registration request to:', `${API_URL}/users/`);
       // Create new user
-      await axios.post(`${API_URL}/users/`, {
+      const registerResponse = await axios.post(`${API_URL}/users/`, {
         email: registerData.email,
         password: registerData.password,
         full_name: registerData.full_name,
         is_admin: registerData.is_admin,
         admin_code: registerData.admin_code,
+      }, {
+        withCredentials: true
       });
+      console.log('Registration successful:', registerResponse.data);
 
       // Log in automatically after registration
       const formData = new URLSearchParams();
@@ -94,18 +111,27 @@ const Login: React.FC = () => {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
+          withCredentials: true
         }
       );
       
       localStorage.setItem('token', response.data.access_token);
       const userResponse = await axios.get(`${API_URL}/users/me`, {
-        headers: { Authorization: `Bearer ${response.data.access_token}` },
+        headers: { 
+          Authorization: `Bearer ${response.data.access_token}`,
+        },
+        withCredentials: true
       });
       localStorage.setItem('user', JSON.stringify(userResponse.data));
       
       setOpenRegister(false);
       navigate(userResponse.data.is_admin ? '/admin' : '/dashboard');
     } catch (err: any) {
+      console.error('Registration error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
       setRegisterError(err.response?.data?.detail || 'Registration failed. Please try again.');
     }
   };
