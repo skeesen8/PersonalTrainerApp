@@ -19,6 +19,9 @@ import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL?.trim() || 'http://localhost:8000';
 
+// Configure axios defaults
+axios.defaults.withCredentials = true;
+
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,6 +39,8 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     console.log('API URL:', API_URL);
+    // Log the current origin
+    console.log('Current origin:', window.location.origin);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,8 +57,8 @@ const Login: React.FC = () => {
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          withCredentials: true
+            'Origin': window.location.origin
+          }
         }
       );
       console.log('Login response:', response.data);
@@ -63,8 +68,8 @@ const Login: React.FC = () => {
       const userResponse = await axios.get(`${API_URL}/users/me`, {
         headers: { 
           Authorization: `Bearer ${response.data.access_token}`,
-        },
-        withCredentials: true
+          'Origin': window.location.origin
+        }
       });
       console.log('User data:', userResponse.data);
       localStorage.setItem('user', JSON.stringify(userResponse.data));
@@ -79,6 +84,7 @@ const Login: React.FC = () => {
         message: err.message,
         response: err.response?.data,
         status: err.response?.status,
+        headers: err.response?.headers
       });
       setError(err.response?.data?.detail || 'Failed to connect to the server. Please try again.');
     }
@@ -88,7 +94,6 @@ const Login: React.FC = () => {
     setRegisterError('');
     try {
       console.log('Making registration request to:', `${API_URL}/users/`);
-      // Create new user
       const registerResponse = await axios.post(`${API_URL}/users/`, {
         email: registerData.email,
         password: registerData.password,
@@ -96,7 +101,9 @@ const Login: React.FC = () => {
         is_admin: registerData.is_admin,
         admin_code: registerData.admin_code,
       }, {
-        withCredentials: true
+        headers: {
+          'Origin': window.location.origin
+        }
       });
       console.log('Registration successful:', registerResponse.data);
 
@@ -110,8 +117,8 @@ const Login: React.FC = () => {
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          withCredentials: true
+            'Origin': window.location.origin
+          }
         }
       );
       
@@ -119,8 +126,8 @@ const Login: React.FC = () => {
       const userResponse = await axios.get(`${API_URL}/users/me`, {
         headers: { 
           Authorization: `Bearer ${response.data.access_token}`,
-        },
-        withCredentials: true
+          'Origin': window.location.origin
+        }
       });
       localStorage.setItem('user', JSON.stringify(userResponse.data));
       
@@ -131,6 +138,7 @@ const Login: React.FC = () => {
         message: err.message,
         response: err.response?.data,
         status: err.response?.status,
+        headers: err.response?.headers
       });
       setRegisterError(err.response?.data?.detail || 'Registration failed. Please try again.');
     }
