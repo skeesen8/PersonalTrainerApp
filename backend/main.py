@@ -11,6 +11,7 @@ from dependencies import get_db
 import logging
 import os
 from dotenv import load_dotenv
+from fastapi.responses import PlainTextResponse
 
 # Load environment variables
 load_dotenv()
@@ -20,6 +21,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Personal Trainer API")
+
+# Add more detailed startup logging
+logger.info("Initializing FastAPI application")
+logger.info(f"Current working directory: {os.getcwd()}")
+logger.info(f"Environment variables: {dict(os.environ)}")
 
 # Get allowed origins from environment
 allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
@@ -167,4 +173,9 @@ def read_users(current_user: models.User = Depends(get_current_user)):
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Not authorized to view all users")
     with get_db() as db:
-        return crud.get_users(db) 
+        return crud.get_users(db)
+
+@app.get("/_health", response_class=PlainTextResponse)
+async def health_check():
+    logger.info("Health check endpoint called")
+    return "OK" 

@@ -3,11 +3,13 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-healthcheckPath = "/docs"
+healthcheckPath = "/_health"
 healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
+startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT --log-level debug"
 
 [deploy.envVars]
 DATABASE_URL = "${{ Postgres-af7H.DATABASE_URL }}"
 DATABASE_PUBLIC_URL = "${{ Postgres-af7H.DATABASE_PUBLIC_URL }}"
-ALLOWED_ORIGINS = "http://localhost:3000,https://personal-trainer-app-topaz.vercel.app" 
+ALLOWED_ORIGINS = "http://localhost:3000,https://personal-trainer-app-topaz.vercel.app"
+PORT = "8080" 
