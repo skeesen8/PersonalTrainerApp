@@ -14,14 +14,9 @@ FROM node:18-slim
 
 WORKDIR /app
 
-# Copy package files and install production dependencies
-COPY package*.json ./
-COPY server.js ./
-RUN npm install --production
-RUN npm install express
-
-# Copy built assets from builder stage
+# Copy server and built assets
 COPY --from=build /app/build ./build
+COPY server.js .
 
 ENV PORT=3000
 EXPOSE 3000
