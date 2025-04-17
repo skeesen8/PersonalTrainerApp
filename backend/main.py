@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -18,10 +18,11 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Personal Trainer API")
 
 # Get allowed origins from environment or use defaults
-ALLOWED_ORIGINS = os.getenv(
-    "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:8000,https://personal-trainer-e0oxgs06w-skeesen8s-projects.vercel.app"
-).split(",")
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "https://personal-trainer-4ufb2ighi-skeesen8s-projects.vercel.app"
+]
 
 logger.info(f"Configured CORS with allowed origins: {ALLOWED_ORIGINS}")
 
@@ -33,6 +34,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"Incoming request: {request.method} {request.url}")
+    logger.info(f"Client host: {request.client.host}")
+    logger.info(f"Headers: {request.headers}")
+    response = await call_next(request)
+    logger.info(f"Response status: {response.status_code}")
+    return response
 
 @app.on_event("startup")
 async def startup_event():
