@@ -7,7 +7,6 @@
     "numReplicas": 1,
     "healthcheckPath": "/_health",
     "healthcheckTimeout": 60,
-    "restartPolicyType": "ON_FAILURE",
-    "startCommand": "npx serve -s build -l $PORT"
+    "restartPolicyType": "ON_FAILURE"
   }
 } 

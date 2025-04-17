@@ -13,9 +13,14 @@ RUN echo "OK" > build/_health
 FROM node:18-slim
 
 WORKDIR /app
+
+# Copy package files and install production dependencies
 COPY package*.json ./
+COPY server.js ./
 RUN npm install --production
-RUN npm install -g serve
+RUN npm install express
+
+# Copy built assets from builder stage
 COPY --from=build /app/build ./build
 
 ENV PORT=3000
@@ -23,9 +28,6 @@ EXPOSE 3000
 
 # Add healthcheck
 HEALTHCHECK --interval=5s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:$PORT/_health || exit 1
+    CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3000) + '/_health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"
 
-# Install curl for healthcheck
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
-CMD ["npx", "serve", "-s", "build"] 
+CMD ["node", "server.js"] 
