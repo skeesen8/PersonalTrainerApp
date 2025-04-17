@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import {
   Container,
   Paper,
@@ -17,20 +16,15 @@ import {
 } from '@mui/material';
 import api from '../api/axios';
 
-const API_URL = process.env.REACT_APP_API_URL?.trim() || 'http://localhost:8000';
-
-// Configure axios defaults
-api.defaults.withCredentials = true;
-
 interface LoginProps {
   onLogin: (token: string) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [openRegister, setOpenRegister] = useState(false);
+  const [loginData, setLoginData] = useState({
+    email: '',
+    password: '',
+  });
   const [registerData, setRegisterData] = useState({
     email: '',
     password: '',
@@ -38,23 +32,18 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     admin_code: '',
     is_admin: false,
   });
-  const [registerError, setRegisterError] = useState('');
-  const navigate = useNavigate();
+  const [error, setError] = useState('');
+  const [openRegister, setOpenRegister] = useState(false);
 
-  useEffect(() => {
-    console.log('API URL:', API_URL);
-    console.log('Current origin:', window.location.origin);
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
     try {
-      console.log('Making login request with:', { username: email, password });
+      console.log('Making login request...');
       const formData = new URLSearchParams();
-      formData.append('username', email);
-      formData.append('password', password);
+      formData.append('username', loginData.email);
+      formData.append('password', loginData.password);
 
       const response = await api.post('/token', formData, {
         headers: {
@@ -63,82 +52,88 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       });
 
       if (response.data.access_token) {
+        console.log('Login successful');
         onLogin(response.data.access_token);
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.response?.data?.detail || 'Failed to login');
+      setError(err.response?.data?.detail || 'Failed to login. Please check your credentials.');
     }
   };
 
   const handleRegister = async () => {
     try {
+      console.log('Making registration request...');
       const response = await api.post('/users/', {
-        email,
-        password,
-        is_admin: false
+        email: registerData.email,
+        password: registerData.password,
+        full_name: registerData.full_name,
+        is_admin: registerData.is_admin,
+        admin_code: registerData.admin_code || undefined
       });
-      console.log('Registration successful:', response.data);
-      // Automatically log in after successful registration
-      handleSubmit(new Event('submit') as any);
+
+      console.log('Registration successful');
+      setOpenRegister(false);
+      
+      // Auto-login after registration
+      setLoginData({
+        email: registerData.email,
+        password: registerData.password
+      });
+      const formData = new URLSearchParams();
+      formData.append('username', registerData.email);
+      formData.append('password', registerData.password);
+      
+      const loginResponse = await api.post('/token', formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+
+      if (loginResponse.data.access_token) {
+        onLogin(loginResponse.data.access_token);
+      }
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.response?.data?.detail || 'Failed to register');
+      setError(err.response?.data?.detail || 'Failed to register. Please try again.');
     }
   };
 
   return (
     <Container maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <Typography component="h1" variant="h5">
+      <Box sx={{ marginTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Paper elevation={3} sx={{ p: 4, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Typography component="h1" variant="h5" gutterBottom>
             Personal Trainer App
           </Typography>
+          
           {error && (
-            <Alert severity="error" sx={{ mt: 2, width: '100%' }}>
+            <Alert severity="error" sx={{ mt: 2, width: '100%', mb: 2 }}>
               {error}
             </Alert>
           )}
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
+
+          <Box component="form" onSubmit={handleLogin} sx={{ width: '100%' }}>
             <TextField
               margin="normal"
               required
               fullWidth
-              id="email"
               label="Email Address"
-              name="email"
+              type="email"
               autoComplete="email"
+              value={loginData.email}
+              onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
               autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
             />
             <TextField
               margin="normal"
               required
               fullWidth
-              name="password"
               label="Password"
               type="password"
-              id="password"
               autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={loginData.password}
+              onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
             />
             <Button
               type="submit"
@@ -159,44 +154,41 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         </Paper>
       </Box>
 
-      <Dialog open={openRegister} onClose={() => setOpenRegister(false)}>
+      <Dialog open={openRegister} onClose={() => setOpenRegister(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Create New Account</DialogTitle>
         <DialogContent>
-          {registerError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {registerError}
-            </Alert>
-          )}
           <TextField
-            autoFocus
-            margin="dense"
-            label="Full Name"
-            type="text"
+            margin="normal"
+            required
             fullWidth
+            label="Full Name"
             value={registerData.full_name}
             onChange={(e) => setRegisterData({ ...registerData, full_name: e.target.value })}
+            autoFocus
           />
           <TextField
-            margin="dense"
+            margin="normal"
+            required
+            fullWidth
             label="Email Address"
             type="email"
-            fullWidth
             value={registerData.email}
             onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
           />
           <TextField
-            margin="dense"
+            margin="normal"
+            required
+            fullWidth
             label="Password"
             type="password"
-            fullWidth
             value={registerData.password}
             onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
           />
           <TextField
-            margin="dense"
+            margin="normal"
+            fullWidth
             label="Admin Code (optional)"
             type="password"
-            fullWidth
             value={registerData.admin_code}
             onChange={(e) => setRegisterData({ ...registerData, admin_code: e.target.value })}
           />
@@ -214,7 +206,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenRegister(false)}>Cancel</Button>
-          <Button onClick={handleRegister} variant="contained">
+          <Button onClick={handleRegister} variant="contained" color="primary">
             Register
           </Button>
         </DialogActions>
