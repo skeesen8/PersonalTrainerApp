@@ -3,40 +3,42 @@ const fs = require('fs');
 const path = require('path');
 
 const port = process.env.PORT || 3000;
+const BUILD_DIR = path.join(__dirname, 'build');
 
-console.log('Starting server...');
-console.log('Port:', port);
-console.log('Current directory:', __dirname);
-console.log('Files in directory:', fs.readdirSync(__dirname));
-console.log('Files in build directory:', fs.readdirSync(path.join(__dirname, 'build')));
+// Simple MIME type mapping
+const mimeTypes = {
+    '.html': 'text/html',
+    '.js': 'text/javascript',
+    '.css': 'text/css',
+    '.json': 'application/json',
+    '.png': 'image/png',
+    '.jpg': 'image/jpg',
+    '.gif': 'image/gif',
+    '.svg': 'image/svg+xml',
+    '.ico': 'image/x-icon'
+};
 
 const server = http.createServer((req, res) => {
-    console.log('Received request:', req.method, req.url);
-
+    // Health check endpoint
     if (req.url === '/_health') {
-        console.log('Health check request received');
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('OK');
         return;
     }
 
-    // Serve static files from build directory
-    let filePath = path.join(__dirname, 'build', req.url === '/' ? 'index.html' : req.url);
+    // Handle static files
+    let filePath = path.join(BUILD_DIR, req.url === '/' ? 'index.html' : req.url);
+    const ext = path.extname(filePath);
     
-    console.log('Attempting to serve:', filePath);
-
     try {
-        if (fs.existsSync(filePath)) {
-            if (fs.statSync(filePath).isDirectory()) {
-                filePath = path.join(filePath, 'index.html');
-            }
+        if (fs.existsSync(filePath) && !fs.statSync(filePath).isDirectory()) {
             const content = fs.readFileSync(filePath);
-            res.writeHead(200);
+            res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' });
             res.end(content);
         } else {
-            // Fallback to index.html for client-side routing
-            const content = fs.readFileSync(path.join(__dirname, 'build', 'index.html'));
-            res.writeHead(200);
+            // Serve index.html for client-side routing
+            const content = fs.readFileSync(path.join(BUILD_DIR, 'index.html'));
+            res.writeHead(200, { 'Content-Type': 'text/html' });
             res.end(content);
         }
     } catch (error) {
@@ -47,5 +49,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    console.log(`Server running at http://localhost:${port}/`);
 }); 
