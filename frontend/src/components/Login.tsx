@@ -17,6 +17,8 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,7 +42,7 @@ const Login: React.FC = () => {
       formData.append('username', email);
       formData.append('password', password);
 
-      const response = await axios.post('http://localhost:8000/token', 
+      const response = await axios.post(`${API_URL}/token`, 
         formData,
         {
           headers: {
@@ -49,7 +51,7 @@ const Login: React.FC = () => {
         }
       );
       localStorage.setItem('token', response.data.access_token);
-      const userResponse = await axios.get('http://localhost:8000/users/me', {
+      const userResponse = await axios.get(`${API_URL}/users/me`, {
         headers: { Authorization: `Bearer ${response.data.access_token}` },
       });
       localStorage.setItem('user', JSON.stringify(userResponse.data));
@@ -67,7 +69,7 @@ const Login: React.FC = () => {
     setRegisterError('');
     try {
       // Create new user
-      await axios.post('http://localhost:8000/users/', {
+      await axios.post(`${API_URL}/users/`, {
         email: registerData.email,
         password: registerData.password,
         full_name: registerData.full_name,
@@ -80,7 +82,7 @@ const Login: React.FC = () => {
       formData.append('username', registerData.email);
       formData.append('password', registerData.password);
 
-      const response = await axios.post('http://localhost:8000/token', 
+      const response = await axios.post(`${API_URL}/token`, 
         formData,
         {
           headers: {
@@ -90,7 +92,7 @@ const Login: React.FC = () => {
       );
       
       localStorage.setItem('token', response.data.access_token);
-      const userResponse = await axios.get('http://localhost:8000/users/me', {
+      const userResponse = await axios.get(`${API_URL}/users/me`, {
         headers: { Authorization: `Bearer ${response.data.access_token}` },
       });
       localStorage.setItem('user', JSON.stringify(userResponse.data));
