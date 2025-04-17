@@ -44,19 +44,33 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
     max_age=3600,
 )
 
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
+async def cors_middleware(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url}")
     logger.info(f"Request headers: {dict(request.headers)}")
-    logger.info(f"Origin: {request.headers.get('origin')}")
+    origin = request.headers.get("origin")
+    logger.info(f"Request origin: {origin}")
+    
+    if origin in ALLOWED_ORIGINS:
+        logger.info(f"Origin {origin} is allowed")
+    else:
+        logger.warning(f"Origin {origin} is not in allowed origins: {ALLOWED_ORIGINS}")
     
     response = await call_next(request)
+    
+    # Add CORS headers manually for more control
+    if origin in ALLOWED_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Max-Age"] = "3600"
     
     logger.info(f"Response status: {response.status_code}")
     logger.info(f"Response headers: {dict(response.headers)}")
