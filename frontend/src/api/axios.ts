@@ -6,16 +6,19 @@ const api = axios.create({
         'Content-Type': 'application/json',
         'Accept': 'application/json',
     },
-    withCredentials: false
+    withCredentials: true
 });
 
 // Add request interceptor for debugging
 api.interceptors.request.use(
     (config) => {
+        // For token requests, ensure the correct content type
+        if (config.url === '/token') {
+            config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        }
+        
         console.log('Making request to:', config.url);
         console.log('Request headers:', config.headers);
-        // Ensure CORS headers are present for all requests
-        config.headers['Access-Control-Allow-Origin'] = '*';
         return config;
     },
     (error) => {
