@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import { useAuth } from '../context/AuthContext';
 
 const Login: React.FC = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const { setToken } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -21,9 +23,7 @@ const Login: React.FC = () => {
             const response = await api.post('/token', formData.toString());
             
             if (response.data.access_token) {
-                // Store the token
-                localStorage.setItem('token', response.data.access_token);
-                // Navigate to dashboard
+                setToken(response.data.access_token);
                 navigate('/dashboard');
             }
         } catch (err: any) {
