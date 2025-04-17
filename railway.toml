@@ -9,4 +9,5 @@ restartPolicyType = "ON_FAILURE"
 
 [deploy.envVars]
 DATABASE_URL = "${{ Postgres-af7H.DATABASE_URL }}"
-DATABASE_PUBLIC_URL = "${{ Postgres-af7H.DATABASE_PUBLIC_URL }}" 
+DATABASE_PUBLIC_URL = "${{ Postgres-af7H.DATABASE_PUBLIC_URL }}"
+ALLOWED_ORIGINS = "http://localhost:3000,https://personal-trainer-4ufb2ighi-skeesen8s-projects.vercel.app" 

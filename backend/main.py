@@ -10,6 +10,10 @@ from auth import create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINU
 from dependencies import get_db
 import logging
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -17,13 +21,8 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Personal Trainer API")
 
-# Get allowed origins from environment or use defaults
-ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:8000",
-    "https://personal-trainer-4ufb2ighi-skeesen8s-projects.vercel.app"
-]
-
+# Get allowed origins from environment
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 logger.info(f"Configured CORS with allowed origins: {ALLOWED_ORIGINS}")
 
 # CORS middleware configuration
