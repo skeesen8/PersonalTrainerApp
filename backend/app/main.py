@@ -17,7 +17,7 @@ app = FastAPI(title="Personal Trainer API")
 # CORS middleware configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000","https://personal-trainer-app-topaz.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
