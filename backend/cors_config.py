@@ -1,14 +1,23 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
+from typing import List
 
-def setup_cors(app: FastAPI) -> None:
-    """Configure CORS for the FastAPI application."""
+def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
+    """
+    Configure CORS for the FastAPI application
+    """
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
         allow_methods=["*"],
-        allow_headers=["*"],
+        allow_headers=[
+            "Content-Type",
+            "Authorization",
+            "Accept",
+            "Origin",
+            "X-Requested-With",
+        ],
         expose_headers=["*"],
         max_age=3600,
     )

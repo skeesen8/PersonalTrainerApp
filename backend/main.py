@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy.orm import Session
@@ -12,8 +11,6 @@ from dependencies import get_db
 import logging
 import os
 from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import Response
 from cors_config import setup_cors
 
 # Load environment variables
@@ -31,21 +28,12 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
-# Configure CORS
-origins = [
+# Configure CORS with allowed origins
+allowed_origins = [
     "https://personal-trainer-app-topaz.vercel.app",  # Production frontend
     "http://localhost:3000",  # Local development frontend
 ]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=3600,
-)
+setup_cors(app, allowed_origins)
 
 logger.info("Starting application with configuration:")
 logger.info(f"Current working directory: {os.getcwd()}")
@@ -63,22 +51,6 @@ async def log_requests(request: Request, call_next):
     logger.info(f"Response headers: {dict(response.headers)}")
     return response
 
-@app.options("/{path:path}")
-async def options_route(request: Request, path: str):
-    origin = request.headers.get("origin")
-    if origin in origins:
-        return PlainTextResponse(
-            status_code=200,
-            headers={
-                "Access-Control-Allow-Origin": origin,
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-                "Access-Control-Allow-Headers": "Authorization, Content-Type",
-                "Access-Control-Allow-Credentials": "true",
-                "Access-Control-Max-Age": "3600",
-            }
-        )
-    return PlainTextResponse(status_code=400)
-
 @app.get("/")
 async def root():
     return {"message": "Personal Trainer API is running"}
@@ -89,8 +61,20 @@ async def health_check():
     return {"status": "healthy"}
 
 @app.options("/token")
-async def token_preflight():
-    return PlainTextResponse(status_code=200)
+async def token_preflight(request: Request):
+    origin = request.headers.get("origin")
+    if origin in allowed_origins:
+        return PlainTextResponse(
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type",
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Max-Age": "3600",
+            }
+        )
+    return PlainTextResponse(status_code=400)
 
 @app.on_event("startup")
 async def startup_event():
