@@ -33,7 +33,8 @@ app = FastAPI(
 allowed_origins = [
     "http://localhost:3000",  # Local development
     "https://personal-trainer-app-topaz.vercel.app",  # Production frontend
-    "https://scintillating-harmony-production.up.railway.app"  # Production backend
+    "https://scintillating-harmony-production.up.railway.app",
+    "https://personaltrainerappv1-production.up.railway.app"
 ]
 
 # Add CORS middleware
