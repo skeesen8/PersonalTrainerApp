@@ -37,7 +37,7 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         # Define CSP directives
         csp_directives = [
             "default-src 'self'",
-            f"script-src 'self' 'nonce-{nonce}' https://personal-trainer-app-topaz.vercel.app",
+            f"script-src 'self' 'nonce-{nonce}'",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob:",
             "font-src 'self'",
@@ -45,6 +45,7 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
             "base-uri 'self'",
             "form-action 'self'",
             "frame-ancestors 'none'",
+            "connect-src 'self' https://scintillating-harmony-production.up.railway.app https://personaltrainerappv1-production.up.railway.app https://personal-trainer-app-topaz.vercel.app",
             "upgrade-insecure-requests"
         ]
         
