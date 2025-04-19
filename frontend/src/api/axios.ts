@@ -13,9 +13,13 @@ const axiosInstance = axios.create({
 // Request interceptor
 axiosInstance.interceptors.request.use(
     (config) => {
-        // For token requests, ensure correct content type
+        // For token requests, ensure correct content type and remove trailing slash from baseURL
         if (config.url?.includes('/token')) {
             config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+            // Remove trailing slash if present in baseURL
+            if (config.baseURL?.endsWith('/')) {
+                config.baseURL = config.baseURL.slice(0, -1);
+            }
         }
         
         console.log('Request:', config);
