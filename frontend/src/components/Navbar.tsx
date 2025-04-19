@@ -110,9 +110,9 @@ const Navbar = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between h-16 items-center">
                     <div className="flex items-center">
-                        <Link to="/" className="text-white text-2xl font-bold tracking-wider mr-8">
+                        {/* <Link to="/" className="text-white text-2xl font-bold tracking-wider mr-8">
                             FitFlow
-                        </Link>
+                        </Link> */}
                         <div className="hidden md:flex relative space-x-1">
                             {isAuthenticated && (
                                 <>

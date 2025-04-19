@@ -21,7 +21,7 @@ const AppRoutes: React.FC = () => {
 
     return (
         <div className="app-container">
-            <Navbar />
+            {/* <Navbar /> */}
             <main className="main-content">
                 <Routes>
                     <Route 
