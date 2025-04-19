@@ -30,8 +30,9 @@ app = FastAPI(
 
 # Configure CORS with allowed origins
 allowed_origins = [
-    "https://personal-trainer-app-topaz.vercel.app",  # Production frontend
+    "https://personal-trainer-app-topaz.vercel.app",  # Production frontend on Vercel
     "http://localhost:3000",  # Local development frontend
+    "https://scintillating-harmony-production.up.railway.app",  # Production backend
 ]
 setup_cors(app, allowed_origins)
 
@@ -74,6 +75,7 @@ async def token_preflight(request: Request):
                 "Access-Control-Max-Age": "3600",
             }
         )
+    logger.warning(f"Rejected CORS preflight request from origin: {origin}")
     return PlainTextResponse(status_code=400)
 
 @app.on_event("startup")

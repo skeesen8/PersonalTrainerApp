@@ -10,7 +10,7 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         CORSMiddleware,
         allow_origins=allowed_origins,
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=[
             "Content-Type",
             "Authorization",
