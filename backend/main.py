@@ -11,7 +11,6 @@ from dependencies import get_db
 import logging
 import os
 from dotenv import load_dotenv
-from cors_config import setup_cors
 from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables
@@ -31,19 +30,21 @@ app = FastAPI(
 
 # Get allowed origins from environment or use defaults
 allowed_origins = [
-    "http://localhost:3000",  # Local development
-    "https://personal-trainer-app-topaz.vercel.app",  # Production frontend
+    "http://localhost:3000",
+    "https://personal-trainer-app-topaz.vercel.app",
     "https://scintillating-harmony-production.up.railway.app",
     "https://personaltrainerappv1-production.up.railway.app"
 ]
 
-# Add CORS middleware
+# Add CORS middleware with more permissive settings
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 logger.info("Starting application with configuration:")
