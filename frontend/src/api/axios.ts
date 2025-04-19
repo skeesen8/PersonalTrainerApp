@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const baseURL = process.env.REACT_APP_API_URL || 'https://scintillating-harmony-production.up.railway.app' || 'http://localhost:8000';
+const baseURL = process.env.REACT_APP_API_URL || 'https://scintillating-harmony-production.up.railway.app';
 
 const axiosInstance = axios.create({
     baseURL,
@@ -18,12 +18,6 @@ axiosInstance.interceptors.request.use(
             config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
         }
         
-        // Get nonce from meta tag if available
-        const nonceMeta = document.querySelector('meta[name="csp-nonce"]');
-        if (nonceMeta) {
-            config.headers['X-Nonce'] = nonceMeta.getAttribute('content');
-        }
-        
         console.log('Request:', config);
         return config;
     },
@@ -36,23 +30,22 @@ axiosInstance.interceptors.request.use(
 // Response interceptor
 axiosInstance.interceptors.response.use(
     (response) => {
-        // Store nonce from response headers if available
-        const nonce = response.headers['x-nonce'];
-        if (nonce) {
-            const meta = document.querySelector('meta[name="csp-nonce"]') || 
-                        document.createElement('meta');
-            meta.setAttribute('name', 'csp-nonce');
-            meta.setAttribute('content', nonce);
-            if (!meta.parentNode) {
-                document.head.appendChild(meta);
-            }
-        }
-        
         console.log('Response:', response);
         return response;
     },
     (error) => {
-        console.error('Response error:', error);
+        if (error.response) {
+            // The request was made and the server responded with a status code
+            // that falls out of the range of 2xx
+            console.error('Response error data:', error.response.data);
+            console.error('Response error status:', error.response.status);
+        } else if (error.request) {
+            // The request was made but no response was received
+            console.error('No response received:', error.request);
+        } else {
+            // Something happened in setting up the request
+            console.error('Error setting up request:', error.message);
+        }
         return Promise.reject(error);
     }
 );
