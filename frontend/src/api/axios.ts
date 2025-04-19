@@ -17,6 +17,13 @@ axiosInstance.interceptors.request.use(
         if (config.url?.includes('/token')) {
             config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
         }
+        
+        // Get nonce from meta tag if available
+        const nonceMeta = document.querySelector('meta[name="csp-nonce"]');
+        if (nonceMeta) {
+            config.headers['X-Nonce'] = nonceMeta.getAttribute('content');
+        }
+        
         console.log('Request:', config);
         return config;
     },
@@ -29,6 +36,18 @@ axiosInstance.interceptors.request.use(
 // Response interceptor
 axiosInstance.interceptors.response.use(
     (response) => {
+        // Store nonce from response headers if available
+        const nonce = response.headers['x-nonce'];
+        if (nonce) {
+            const meta = document.querySelector('meta[name="csp-nonce"]') || 
+                        document.createElement('meta');
+            meta.setAttribute('name', 'csp-nonce');
+            meta.setAttribute('content', nonce);
+            if (!meta.parentNode) {
+                document.head.appendChild(meta);
+            }
+        }
+        
         console.log('Response:', response);
         return response;
     },
