@@ -1,27 +1,23 @@
 import axios from 'axios';
 
-const api = axios.create({
-    baseURL: process.env.REACT_APP_API_URL || 'https://scintillating-harmony-production.up.railway.app',
+const baseURL = process.env.REACT_APP_API_URL || 'https://scintillating-harmony-production.up.railway.app' || 'http://localhost:8000';
+
+const axiosInstance = axios.create({
+    baseURL,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
     },
-    withCredentials: true
 });
 
-// Add request interceptor for debugging
-api.interceptors.request.use(
+// Request interceptor
+axiosInstance.interceptors.request.use(
     (config) => {
-        // For token requests, ensure the correct content type
-        if (config.url === '/token') {
+        // For token requests, ensure correct content type
+        if (config.url?.includes('/token')) {
             config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
         }
-        
-        console.log('Making request to:', config.url);
-        console.log('Request headers:', config.headers);
+        console.log('Request:', config);
         return config;
     },
     (error) => {
@@ -30,28 +26,16 @@ api.interceptors.request.use(
     }
 );
 
-// Add response interceptor for debugging
-api.interceptors.response.use(
+// Response interceptor
+axiosInstance.interceptors.response.use(
     (response) => {
-        console.log('Response received:', response);
+        console.log('Response:', response);
         return response;
     },
     (error) => {
-        if (error.response) {
-            // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
-            console.error('Response error data:', error.response.data);
-            console.error('Response error status:', error.response.status);
-            console.error('Response error headers:', error.response.headers);
-        } else if (error.request) {
-            // The request was made but no response was received
-            console.error('No response received:', error.request);
-        } else {
-            // Something happened in setting up the request that triggered an Error
-            console.error('Error setting up request:', error.message);
-        }
+        console.error('Response error:', error);
         return Promise.reject(error);
     }
 );
 
-export default api; 
+export default axiosInstance; 

@@ -12,12 +12,13 @@ import logging
 import os
 from dotenv import load_dotenv
 from cors_config import setup_cors
+from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables
 load_dotenv()
 
 # Set up logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Create FastAPI app
@@ -28,13 +29,21 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
-# Configure CORS with allowed origins
+# Get allowed origins from environment or use defaults
 allowed_origins = [
-    "https://personal-trainer-app-topaz.vercel.app",  # Production frontend on Vercel
-    "http://localhost:3000",  # Local development frontend
-    "https://scintillating-harmony-production.up.railway.app",  # Production backend
+    "http://localhost:3000",  # Local development
+    "https://personal-trainer-app-topaz.vercel.app",  # Production frontend
+    "https://scintillating-harmony-production.up.railway.app"  # Production backend
 ]
-setup_cors(app, allowed_origins)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 logger.info("Starting application with configuration:")
 logger.info(f"Current working directory: {os.getcwd()}")
@@ -43,7 +52,7 @@ logger.info(f"Current working directory: {os.getcwd()}")
 async def log_requests(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url}")
     logger.info(f"Request headers: {dict(request.headers)}")
-    logger.info(f"Origin: {request.headers.get('origin')}")
+    logger.info(f"Request origin: {request.headers.get('origin')}")
     
     response = await call_next(request)
     
