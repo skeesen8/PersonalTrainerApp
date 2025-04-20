@@ -14,16 +14,22 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
 }
 
-.app-container {
+/* Remove default link styles globally */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Ensure full height layout */
+#root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-.main-content {
+/* Main content area */
+main {
   flex: 1;
-  padding: 20px;
 } 
