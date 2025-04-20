@@ -34,14 +34,35 @@
     @apply bg-gradient-to-r from-[#00f0ff] via-[#ff69b4] to-[#ff8c42];
   }
 
+  .miami-gradient-hover {
+    @apply hover:bg-gradient-to-r hover:from-[#ff69b4] hover:to-[#00f0ff];
+  }
+
   .miami-card {
     @apply bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 shadow-xl;
   }
 
-  .miami-button {
-    @apply px-6 py-3 rounded-xl font-semibold transition-all duration-300 
-           bg-gradient-to-r from-[#00f0ff] to-[#ff69b4] hover:from-[#ff69b4] hover:to-[#00f0ff]
-           hover:shadow-lg hover:shadow-[#00f0ff]/20 focus:ring-2 focus:ring-[#00f0ff]/50;
+  /* Base button styles - use with Button component */
+  .btn-base {
+    @apply rounded-xl font-semibold transition-all duration-300 
+           disabled:opacity-50 disabled:cursor-not-allowed
+           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#1a1a2e];
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-[#00f0ff] to-[#ff69b4] 
+           hover:from-[#ff69b4] hover:to-[#00f0ff]
+           focus:ring-[#00f0ff]/50;
+  }
+
+  .btn-secondary {
+    @apply bg-white/10 hover:bg-white/20
+           focus:ring-white/50;
+  }
+
+  .btn-outline {
+    @apply border-2 border-[#00f0ff] hover:border-[#ff69b4]
+           focus:ring-[#00f0ff]/50;
   }
 
   .miami-input {
@@ -60,6 +81,17 @@
 
   .hover-scale {
     @apply transition-transform duration-300 hover:scale-105;
+  }
+
+  /* Navigation styles */
+  .nav-link {
+    @apply px-4 py-2 rounded-lg transition-colors duration-300
+           hover:bg-white/10 focus:outline-none focus:ring-2 
+           focus:ring-[#00f0ff]/50;
+  }
+
+  .nav-link-active {
+    @apply bg-white/20;
   }
 }
 
