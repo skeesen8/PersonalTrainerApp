@@ -31,9 +31,7 @@ app = FastAPI(
 # Get allowed origins from environment or use defaults
 allowed_origins = [
     "http://localhost:3000",
-    "https://personal-trainer-app-topaz.vercel.app",
-    "https://scintillating-harmony-production.up.railway.app",
-    "https://personaltrainerappv1-production.up.railway.app"
+    "https://personal-trainer-app-topaz.vercel.app"
 ]
 
 # Add CORS middleware with more permissive settings
@@ -52,13 +50,18 @@ logger.info(f"Current working directory: {os.getcwd()}")
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
+    origin = request.headers.get("origin")
     logger.info(f"Incoming request: {request.method} {request.url}")
     logger.info(f"Request headers: {dict(request.headers)}")
-    logger.info(f"Request origin: {request.headers.get('origin')}")
+    logger.info(f"Request origin: {origin}")
     
     response = await call_next(request)
     
-    # Log response details
+    # Add CORS headers for non-OPTIONS requests
+    if origin in allowed_origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+    
     logger.info(f"Response status: {response.status_code}")
     logger.info(f"Response headers: {dict(response.headers)}")
     return response
