@@ -158,12 +158,16 @@ async def create_user(user: schemas.UserCreate):
         return created_user
 
 @app.get("/users/", response_model=List[schemas.User])
-def read_users(current_user: models.User = Depends(get_current_user)):
+def read_users(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: models.User = Depends(get_current_user)
+):
     """Get all users (for admins) or assigned users (for regular users)"""
     with get_db() as db:
         if not current_user.is_admin:
             raise HTTPException(status_code=403, detail="Not authorized to view users")
-        return crud.get_users(db)
+        return crud.get_users(db, skip=skip, limit=limit, admin_id=current_user.id)
 
 @app.post("/users/assign/{user_id}", response_model=schemas.User)
 def assign_user_to_admin(
@@ -171,10 +175,28 @@ def assign_user_to_admin(
     current_user: models.User = Depends(get_current_user)
 ):
     """Assign a user to an admin"""
+    logger.info(f"Attempting to assign user {user_id} to admin {current_user.id}")
     with get_db() as db:
         if not current_user.is_admin:
             raise HTTPException(status_code=403, detail="Not authorized to assign users")
-        return crud.assign_user_to_admin(db, admin_id=current_user.id, user_id=user_id)
+        
+        # Check if user exists
+        user = crud.get_user(db, user_id=user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Check if user is already assigned to this admin
+        admin = crud.get_user(db, user_id=current_user.id)
+        if user in admin.assigned_users:
+            logger.info(f"User {user_id} is already assigned to admin {current_user.id}")
+            return user
+        
+        result = crud.assign_user_to_admin(db, admin_id=current_user.id, user_id=user_id)
+        if not result:
+            raise HTTPException(status_code=400, detail="Failed to assign user")
+        
+        logger.info(f"Successfully assigned user {user_id} to admin {current_user.id}")
+        return result
 
 @app.post("/workout-plans/", response_model=schemas.WorkoutPlan)
 def create_workout_plan(
@@ -266,8 +288,8 @@ def read_meal_plans(
 
 @app.get("/users/assigned", response_model=List[schemas.User])
 def read_assigned_users(current_user: models.User = Depends(get_current_user)):
-    """Get users assigned to the current admin"""
+    """Get all users assigned to the current admin"""
     with get_db() as db:
         if not current_user.is_admin:
-            raise HTTPException(status_code=403, detail="Not authorized to view users")
-        return current_user.assigned_users 
+            raise HTTPException(status_code=403, detail="Not authorized to view assigned users")
+        return crud.get_admin_users(db, admin_id=current_user.id) 
