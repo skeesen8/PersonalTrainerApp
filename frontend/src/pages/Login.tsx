@@ -17,9 +17,9 @@ const Login: React.FC = () => {
     setError('');
     setIsLoading(true);
     try {
-      await login(username, password);
-      // Use navigate for both cases
-      navigate(isAdmin ? '/admin' : '/dashboard', { replace: true });
+      const userData = await login(username, password);
+      // Navigate based on user role after we have the user data
+      navigate(userData.is_admin ? '/admin' : '/dashboard', { replace: true });
     } catch (err) {
       setError('Invalid username or password');
     } finally {

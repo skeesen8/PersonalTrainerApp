@@ -65,24 +65,9 @@ const Navbar = () => {
     const [activeTab, setActiveTab] = useState(location.pathname);
     const [markerStyle, setMarkerStyle] = useState({ x: 0, width: 0, height: 2 });
     const [hoveredTab, setHoveredTab] = useState<string | null>(null);
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const isAdmin = user?.is_admin || false;
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
 
     const handleLogout = async () => {
         await logout();
-        setIsOpen(false);
         navigate('/login');
     };
 
@@ -160,6 +145,17 @@ const Navbar = () => {
                                     >
                                         Meal Plans
                                     </NavLink>
+                                    {user?.is_admin && (
+                                        <NavLink
+                                            to="/admin"
+                                            isActive={activeTab === '/admin'}
+                                            onClick={() => handleTabClick('/admin')}
+                                            onMouseEnter={(el) => handleTabHover('/admin', el)}
+                                            onMouseLeave={handleTabLeave}
+                                        >
+                                            Admin Dashboard
+                                        </NavLink>
+                                    )}
                                     <NavigationMarker {...markerStyle} />
                                 </>
                             )}
@@ -168,44 +164,14 @@ const Navbar = () => {
 
                     <div className="hidden md:flex items-center space-x-4">
                         {isAuthenticated ? (
-                            <div className="relative" ref={dropdownRef}>
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => setIsOpen(!isOpen)}
-                                    className="text-[#00f0ff] hover:text-purple-600 border-[#00f0ff] hover:bg-white transition-colors"
-                                >
-                                    {user?.email || 'Account'}
-                                </Button>
-                                <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-[#1a1a2e] border border-[#00f0ff]/20 ${isOpen ? 'block' : 'hidden'}`}>
-                                    {isAdmin && (
-                                        <Link
-                                            to="/admin"
-                                            className="block px-4 py-2 text-sm text-white hover:bg-[#2a2a4e] transition-colors"
-                                        >
-                                            Admin Dashboard
-                                        </Link>
-                                    )}
-                                    <Link
-                                        to="/dashboard"
-                                        className="block px-4 py-2 text-sm text-white hover:bg-[#2a2a4e] transition-colors"
-                                    >
-                                        Dashboard
-                                    </Link>
-                                    <Link
-                                        to="/profile"
-                                        className="block px-4 py-2 text-sm text-white hover:bg-[#2a2a4e] transition-colors"
-                                    >
-                                        Profile
-                                    </Link>
-                                    <button
-                                        onClick={handleLogout}
-                                        className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2a2a4e] transition-colors"
-                                    >
-                                        Sign out
-                                    </button>
-                                </div>
-                            </div>
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={handleLogout}
+                                className="text-[#00f0ff] hover:text-purple-600 border-[#00f0ff] hover:bg-white transition-colors"
+                            >
+                                Logout
+                            </Button>
                         ) : (
                             <>
                                 <Button

@@ -14,7 +14,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isAdmin: boolean;
     logout: () => void;
-    login: (username: string, password: string) => Promise<void>;
+    login: (username: string, password: string) => Promise<User>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -64,12 +64,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             if (response.data.access_token) {
                 const newToken = response.data.access_token;
-                localStorage.setItem('token', newToken);
-                setToken(newToken);
-                // Set token in axios default headers
+                // Set token in axios default headers first
                 api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-                // After getting the token, fetch user data
-                await fetchUserData();
+                
+                // Then fetch user data
+                const userResponse = await api.get('/users/me');
+                const userData = userResponse.data;
+                
+                // Update all state at once
+                setToken(newToken);
+                setUser(userData);
+                
+                // Store in localStorage
+                localStorage.setItem('token', newToken);
+                localStorage.setItem('user', JSON.stringify(userData));
+                
+                return userData;
             } else {
                 throw new Error('No access token received');
             }
