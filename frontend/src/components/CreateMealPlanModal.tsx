@@ -73,12 +73,29 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
     e.preventDefault();
     setError('');
     try {
-      await api.post('/meal-plans/', formData);
+      // Format data to match backend schema
+      const formattedData = {
+        ...formData,
+        date: new Date(formData.date).toISOString(),
+        assigned_user_id: Number(formData.assigned_user_id),
+        meals: formData.meals.map(meal => ({
+          name: meal.name,
+          time: meal.time,
+          calories: Number(meal.calories),
+          protein: Number(meal.protein),
+          carbs: Number(meal.carbs),
+          fats: Number(meal.fats),
+          ingredients: meal.ingredients
+        }))
+      };
+
+      await api.post('/meal-plans/', formattedData);
       onMealPlanCreated();
       setFormData(initialFormData);
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to create meal plan');
+      const errorDetail = err.response?.data?.detail;
+      setError(Array.isArray(errorDetail) ? errorDetail[0].msg : (errorDetail || 'Failed to create meal plan'));
     }
   };
 
