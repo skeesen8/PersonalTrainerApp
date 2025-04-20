@@ -156,7 +156,7 @@ const Navbar = () => {
                                 variant="secondary"
                                 size="sm"
                                 onClick={handleLogout}
-                                className="text-white hover:text-purple-600 border-white hover:bg-white transition-colors"
+                                className="text-[#00f0ff] hover:text-purple-600 border-[#00f0ff] hover:bg-white transition-colors"
                             >
                                 Logout
                             </Button>
