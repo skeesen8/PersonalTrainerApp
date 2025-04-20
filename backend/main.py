@@ -154,6 +154,75 @@ async def create_user(user: schemas.UserCreate):
         logger.info(f"Successfully created user: {user.email}")
         return created_user
 
+@app.get("/users/", response_model=List[schemas.User])
+def read_users(current_user: models.User = Depends(get_current_user)):
+    """Get all users (for admins) or assigned users (for regular users)"""
+    with get_db() as db:
+        if not current_user.is_admin:
+            raise HTTPException(status_code=403, detail="Not authorized to view users")
+        return crud.get_users(db)
+
+@app.post("/users/assign/{user_id}", response_model=schemas.User)
+def assign_user_to_admin(
+    user_id: int,
+    current_user: models.User = Depends(get_current_user)
+):
+    """Assign a user to an admin"""
+    with get_db() as db:
+        if not current_user.is_admin:
+            raise HTTPException(status_code=403, detail="Not authorized to assign users")
+        return crud.assign_user_to_admin(db, admin_id=current_user.id, user_id=user_id)
+
+@app.post("/workout-plans/", response_model=schemas.WorkoutPlan)
+def create_workout_plan(
+    workout_plan: schemas.WorkoutPlanCreate,
+    current_user: models.User = Depends(get_current_user)
+):
+    """Create a workout plan"""
+    with get_db() as db:
+        if not current_user.is_admin:
+            raise HTTPException(status_code=403, detail="Not authorized to create workout plans")
+        
+        # Verify the assigned user belongs to this admin
+        assigned_user = crud.get_user(db, workout_plan.assigned_user_id)
+        if not assigned_user or assigned_user.id not in [u.id for u in current_user.assigned_users]:
+            raise HTTPException(status_code=403, detail="Not authorized to create plans for this user")
+        
+        return crud.create_workout_plan(db=db, workout_plan=workout_plan)
+
+@app.post("/meal-plans/", response_model=schemas.MealPlan)
+def create_meal_plan(
+    meal_plan: schemas.MealPlanCreate,
+    current_user: models.User = Depends(get_current_user)
+):
+    """Create a meal plan"""
+    with get_db() as db:
+        if not current_user.is_admin:
+            raise HTTPException(status_code=403, detail="Not authorized to create meal plans")
+        
+        # Verify the assigned user belongs to this admin
+        assigned_user = crud.get_user(db, meal_plan.assigned_user_id)
+        if not assigned_user or assigned_user.id not in [u.id for u in current_user.assigned_users]:
+            raise HTTPException(status_code=403, detail="Not authorized to create plans for this user")
+        
+        return crud.create_meal_plan(db=db, meal_plan=meal_plan)
+
+@app.get("/workout-plans/user", response_model=List[schemas.WorkoutPlan])
+def read_user_workout_plans(
+    current_user: models.User = Depends(get_current_user)
+):
+    """Get workout plans for the current user"""
+    with get_db() as db:
+        return crud.get_user_workout_plans(db, user_id=current_user.id)
+
+@app.get("/meal-plans/user", response_model=List[schemas.MealPlan])
+def read_user_meal_plans(
+    current_user: models.User = Depends(get_current_user)
+):
+    """Get meal plans for the current user"""
+    with get_db() as db:
+        return crud.get_user_meal_plans(db, user_id=current_user.id)
+
 @app.get("/workout-plans/", response_model=List[schemas.WorkoutPlan])
 def read_workout_plans(
     skip: int = 0,
@@ -167,16 +236,6 @@ def read_workout_plans(
             workout_plans = crud.get_user_workout_plans(db, user_id=current_user.id, skip=skip, limit=limit)
         return workout_plans
 
-@app.post("/workout-plans/", response_model=schemas.WorkoutPlan)
-def create_workout_plan(
-    workout_plan: schemas.WorkoutPlanCreate,
-    current_user: models.User = Depends(get_current_user)
-):
-    with get_db() as db:
-        if not current_user.is_admin:
-            raise HTTPException(status_code=403, detail="Not authorized to create workout plans")
-        return crud.create_workout_plan(db=db, workout_plan=workout_plan)
-
 @app.get("/meal-plans/", response_model=List[schemas.MealPlan])
 def read_meal_plans(
     skip: int = 0,
@@ -188,21 +247,4 @@ def read_meal_plans(
             meal_plans = crud.get_meal_plans(db, skip=skip, limit=limit)
         else:
             meal_plans = crud.get_user_meal_plans(db, user_id=current_user.id, skip=skip, limit=limit)
-        return meal_plans
-
-@app.post("/meal-plans/", response_model=schemas.MealPlan)
-def create_meal_plan(
-    meal_plan: schemas.MealPlanCreate,
-    current_user: models.User = Depends(get_current_user)
-):
-    with get_db() as db:
-        if not current_user.is_admin:
-            raise HTTPException(status_code=403, detail="Not authorized to create meal plans")
-        return crud.create_meal_plan(db=db, meal_plan=meal_plan)
-
-@app.get("/users/", response_model=List[schemas.User])
-def read_users(current_user: models.User = Depends(get_current_user)):
-    if not current_user.is_admin:
-        raise HTTPException(status_code=403, detail="Not authorized to view all users")
-    with get_db() as db:
-        return crud.get_users(db) 
+        return meal_plans 

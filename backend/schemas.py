@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
@@ -28,19 +28,42 @@ class User(UserBase):
     class Config:
         orm_mode = True
 
+class UserWithAssignments(User):
+    assigned_users: List[User] = []
+
+    class Config:
+        orm_mode = True
+
+# Exercise schema
+class Exercise(BaseModel):
+    name: str
+    sets: int
+    reps: int
+    weight: float
+
+# Meal schema
+class Meal(BaseModel):
+    name: str
+    time: str
+    calories: int
+    protein: float
+    carbs: float
+    fats: float
+    ingredients: str
+
 # Workout plan schemas
 class WorkoutPlanBase(BaseModel):
     title: str
     description: Optional[str] = None
-    exercises: str
-    scheduled_date: datetime
+    date: datetime
+    exercises: List[Exercise]
+    assigned_user_id: int
 
 class WorkoutPlanCreate(WorkoutPlanBase):
-    user_id: int
+    pass
 
 class WorkoutPlan(WorkoutPlanBase):
     id: int
-    user_id: int
     created_at: datetime
 
     class Config:
@@ -50,15 +73,15 @@ class WorkoutPlan(WorkoutPlanBase):
 class MealPlanBase(BaseModel):
     title: str
     description: Optional[str] = None
-    meals: str
-    scheduled_date: datetime
+    date: datetime
+    meals: List[Meal]
+    assigned_user_id: int
 
 class MealPlanCreate(MealPlanBase):
-    user_id: int
+    pass
 
 class MealPlan(MealPlanBase):
     id: int
-    user_id: int
     created_at: datetime
 
     class Config:

@@ -1,7 +1,15 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, DateTime, Table
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
+
+# Association table for admin-user relationships
+admin_user_association = Table(
+    'admin_users',
+    Base.metadata,
+    Column('admin_id', Integer, ForeignKey('users.id')),
+    Column('user_id', Integer, ForeignKey('users.id'))
+)
 
 class User(Base):
     __tablename__ = "users"
@@ -15,6 +23,15 @@ class User(Base):
     
     workout_plans = relationship("WorkoutPlan", back_populates="user")
     meal_plans = relationship("MealPlan", back_populates="user")
+    
+    # Admin-user relationships
+    assigned_users = relationship(
+        "User",
+        secondary=admin_user_association,
+        primaryjoin=id==admin_user_association.c.admin_id,
+        secondaryjoin=id==admin_user_association.c.user_id,
+        backref="assigned_to_admin"
+    )
 
 class WorkoutPlan(Base):
     __tablename__ = "workout_plans"
