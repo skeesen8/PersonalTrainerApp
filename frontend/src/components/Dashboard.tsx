@@ -8,7 +8,7 @@ import Button from '@mui/material/Button';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import { useNavigate } from 'react-router-dom';
-import Navbar from './Navbar';
+import { useAuth } from '../context/AuthContext';
 
 interface User {
   full_name: string;
@@ -16,7 +16,7 @@ interface User {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user') || '{}') as User;
+  const { user } = useAuth();
 
   const handleClick = (route: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
@@ -24,9 +24,8 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-background">
-      <Navbar />
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+    <div className="min-h-screen bg-gradient-to-br from-[#1a1a2e] to-[#2a2a4e]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom>
             Welcome, {user.full_name}!
@@ -109,7 +108,7 @@ const Dashboard: React.FC = () => {
             </Paper>
           </Grid>
         </Grid>
-      </Container>
+      </div>
     </div>
   );
 };

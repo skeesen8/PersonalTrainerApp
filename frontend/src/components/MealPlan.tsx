@@ -1,137 +1,161 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Container,
-  Paper,
-  Typography,
-  Box,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  CircularProgress,
-} from '@mui/material';
-import axios from 'axios';
-import Navbar from './Navbar';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import api from '../api/axios';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 
 interface Meal {
   name: string;
   time: string;
-  ingredients: string[];
   calories: number;
+  protein: number;
+  carbs: number;
+  fats: number;
+  ingredients: string;
 }
 
-interface IMealPlan {
+interface MealPlan {
   id: number;
   title: string;
   description: string;
-  meals: string;
-  scheduled_date: string;
+  date: string;
+  meals: Meal[];
 }
 
 const MealPlan: React.FC = () => {
-  const [mealPlan, setMealPlan] = useState<IMealPlan | null>(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { user } = useAuth();
 
   useEffect(() => {
-    const fetchMealPlan = async () => {
+    const fetchMealPlans = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:8000/meal-plans/', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (response.data && response.data.length > 0) {
-          setMealPlan(response.data[0]);
-        }
+        const response = await api.get('/meal-plans/user');
+        setMealPlans(response.data);
+        setLoading(false);
       } catch (err) {
-        setError('Failed to fetch meal plan');
-      } finally {
+        setError('Failed to fetch meal plans');
         setLoading(false);
       }
     };
 
-    fetchMealPlan();
+    fetchMealPlans();
   }, []);
 
-  if (loading) {
-    return (
-      <>
-        <Navbar />
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
-        </Box>
-      </>
-    );
-  }
+  const getMealPlansForDate = (date: Date) => {
+    return mealPlans.filter(plan => {
+      const planDate = new Date(plan.date);
+      return planDate.toDateString() === date.toDateString();
+    });
+  };
 
-  if (error) {
-    return (
-      <>
-        <Navbar />
-        <Container maxWidth="md">
-          <Typography color="error" variant="h6" sx={{ mt: 4 }}>
-            {error}
-          </Typography>
-        </Container>
-      </>
-    );
-  }
+  const tileContent = ({ date }: { date: Date }) => {
+    const plans = getMealPlansForDate(date);
+    if (plans.length > 0) {
+      return (
+        <div className="text-[#00f0ff] text-xs mt-1">
+          {plans.length} meal plan{plans.length > 1 ? 's' : ''}
+        </div>
+      );
+    }
+    return null;
+  };
 
-  if (!mealPlan) {
-    return (
-      <>
-        <Navbar />
-        <Container maxWidth="md">
-          <Typography variant="h6" sx={{ mt: 4 }}>
-            No meal plan available for today
-          </Typography>
-        </Container>
-      </>
-    );
-  }
-
-  const meals: Meal[] = JSON.parse(mealPlan.meals);
+  const selectedMealPlans = getMealPlansForDate(selectedDate);
 
   return (
-    <>
-      <Navbar />
-      <Container maxWidth="md">
-        <Paper sx={{ p: 4, mt: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
-            {mealPlan.title}
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary" paragraph>
-            {mealPlan.description}
-          </Typography>
-          <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
-            Today's Meals
-          </Typography>
-          <List>
-            {meals.map((meal, index) => (
-              <React.Fragment key={index}>
-                <ListItem>
-                  <ListItemText
-                    primary={`${meal.name} (${meal.time})`}
-                    secondary={
-                      <>
-                        <Typography component="span" variant="body2" color="text.primary">
-                          {meal.ingredients.join(', ')}
-                        </Typography>
-                        <br />
-                        <Typography component="span" variant="body2" color="text.secondary">
-                          {meal.calories} calories
-                        </Typography>
-                      </>
-                    }
-                  />
-                </ListItem>
-                {index < meals.length - 1 && <Divider />}
-              </React.Fragment>
-            ))}
-          </List>
-        </Paper>
-      </Container>
-    </>
+    <div className="min-h-screen bg-gradient-to-br from-[#1a1a2e] to-[#2a2a4e]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="miami-card p-8">
+          <h1 className="text-3xl font-bold text-white mb-6">Your Meal Plan</h1>
+          
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6">
+              {error}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <Calendar
+                onChange={setSelectedDate}
+                value={selectedDate}
+                tileContent={tileContent}
+                className="miami-calendar w-full rounded-xl border-none bg-[#2a2a4e] text-white"
+              />
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-semibold text-white mb-4">
+                Meals for {selectedDate.toLocaleDateString()}
+              </h2>
+
+              {loading ? (
+                <div className="text-white/60">Loading meal plans...</div>
+              ) : selectedMealPlans.length > 0 ? (
+                <div className="space-y-4">
+                  {selectedMealPlans.map((plan) => (
+                    <div key={plan.id} className="miami-card p-6">
+                      <h3 className="text-xl font-semibold text-white mb-2">
+                        {plan.title}
+                      </h3>
+                      <p className="text-white/60 mb-4">{plan.description}</p>
+                      
+                      <div className="space-y-4">
+                        {plan.meals.map((meal, index) => (
+                          <div key={index} className="bg-black/20 p-4 rounded-xl">
+                            <div className="flex justify-between items-center mb-3">
+                              <h4 className="text-[#00f0ff] font-medium">
+                                {meal.name}
+                              </h4>
+                              <span className="text-white/60">
+                                {meal.time}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-4 gap-4 text-white/80 mb-3">
+                              <div>
+                                <span className="text-white/60">Calories:</span>
+                                <br />{meal.calories}
+                              </div>
+                              <div>
+                                <span className="text-white/60">Protein:</span>
+                                <br />{meal.protein}g
+                              </div>
+                              <div>
+                                <span className="text-white/60">Carbs:</span>
+                                <br />{meal.carbs}g
+                              </div>
+                              <div>
+                                <span className="text-white/60">Fats:</span>
+                                <br />{meal.fats}g
+                              </div>
+                            </div>
+
+                            <div>
+                              <h5 className="text-white/60 text-sm mb-2">Ingredients:</h5>
+                              <p className="text-white/80 whitespace-pre-line">
+                                {meal.ingredients}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="miami-card p-6">
+                  <p className="text-white/60">No meals scheduled for this date.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
