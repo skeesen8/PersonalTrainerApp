@@ -24,9 +24,9 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <>
+    <div className="min-h-screen gradient-background">
       <Navbar />
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom>
             Welcome, {user.full_name}!
@@ -37,7 +37,7 @@ const Dashboard: React.FC = () => {
         </Box>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
+          <Grid item xs={12} md={6}>
             <Paper
               sx={{
                 p: 3,
@@ -45,10 +45,12 @@ const Dashboard: React.FC = () => {
                 flexDirection: 'column',
                 height: 240,
                 cursor: 'pointer',
+                transition: 'box-shadow 0.3s ease-in-out',
                 '&:hover': {
                   boxShadow: 6,
                 },
                 width: '100%',
+                borderRadius: 2,
               }}
               onClick={() => navigate('/workout-plan')}
             >
@@ -71,7 +73,7 @@ const Dashboard: React.FC = () => {
             </Paper>
           </Grid>
 
-          <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
+          <Grid item xs={12} md={6}>
             <Paper
               sx={{
                 p: 3,
@@ -79,10 +81,12 @@ const Dashboard: React.FC = () => {
                 flexDirection: 'column',
                 height: 240,
                 cursor: 'pointer',
+                transition: 'box-shadow 0.3s ease-in-out',
                 '&:hover': {
                   boxShadow: 6,
                 },
                 width: '100%',
+                borderRadius: 2,
               }}
               onClick={() => navigate('/meal-plan')}
             >
@@ -106,7 +110,7 @@ const Dashboard: React.FC = () => {
           </Grid>
         </Grid>
       </Container>
-    </>
+    </div>
   );
 };
 
