@@ -80,7 +80,7 @@ const MealPlan: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
               <Calendar
-                onChange={setSelectedDate}
+                onChange={(value) => setSelectedDate(value as Date)}
                 value={selectedDate}
                 tileContent={tileContent}
                 className="miami-calendar w-full rounded-xl border-none bg-[#2a2a4e] text-white"
