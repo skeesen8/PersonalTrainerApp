@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import Button from './Button';
 
 const Register: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -20,7 +21,6 @@ const Register: React.FC = () => {
         setError('');
 
         try {
-            // Register the user
             await api.post('/users/', {
                 email: formData.email,
                 password: formData.password,
@@ -29,7 +29,6 @@ const Register: React.FC = () => {
                 is_admin: formData.is_admin
             });
 
-            // After successful registration, login the user
             const loginFormData = new URLSearchParams();
             loginFormData.append('username', formData.email);
             loginFormData.append('password', formData.password);
@@ -47,98 +46,132 @@ const Register: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8">
-                <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                        Create your account
-                    </h2>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1a1a2e] to-[#2a2a4e] px-4">
+            <div className="w-full max-w-md">
+                {/* Logo/Brand Section */}
+                <div className="text-center mb-8">
+                    <h1 className="text-4xl font-bold mb-2 miami-gradient bg-clip-text text-transparent">
+                        FitFlow
+                    </h1>
+                    <p className="text-white/60">Create your fitness account</p>
                 </div>
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    {error && (
-                        <div className="rounded-md bg-red-50 p-4">
-                            <div className="text-sm text-red-700">{error}</div>
-                        </div>
-                    )}
-                    <div className="rounded-md shadow-sm -space-y-px">
-                        <div>
-                            <label htmlFor="full_name" className="sr-only">Full Name</label>
-                            <input
-                                id="full_name"
-                                name="full_name"
-                                type="text"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Full Name"
-                                value={formData.full_name}
-                                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="email" className="sr-only">Email address</label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Email address"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="password" className="sr-only">Password</label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Password"
-                                value={formData.password}
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="admin_code" className="sr-only">Admin Code (Optional)</label>
-                            <input
-                                id="admin_code"
-                                name="admin_code"
-                                type="password"
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                                placeholder="Admin Code (Optional)"
-                                value={formData.admin_code}
-                                onChange={(e) => setFormData({ ...formData, admin_code: e.target.value })}
-                            />
-                        </div>
-                    </div>
 
-                    {formData.admin_code && (
-                        <div className="flex items-center">
-                            <input
-                                id="is_admin"
-                                name="is_admin"
-                                type="checkbox"
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                checked={formData.is_admin}
-                                onChange={(e) => setFormData({ ...formData, is_admin: e.target.checked })}
-                            />
-                            <label htmlFor="is_admin" className="ml-2 block text-sm text-gray-900">
-                                Register as Admin
-                            </label>
-                        </div>
-                    )}
+                {/* Registration Card */}
+                <div className="miami-card p-8 backdrop-blur-xl">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {error && (
+                            <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl text-sm text-center">
+                                {error}
+                            </div>
+                        )}
 
-                    <div>
-                        <button
+                        <div className="space-y-4">
+                            <div>
+                                <label htmlFor="full_name" className="block text-sm font-medium text-white/80 mb-2">
+                                    Full Name
+                                </label>
+                                <input
+                                    id="full_name"
+                                    name="full_name"
+                                    type="text"
+                                    required
+                                    className="miami-input"
+                                    placeholder="Enter your full name"
+                                    value={formData.full_name}
+                                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
+                                    Email address
+                                </label>
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    required
+                                    className="miami-input"
+                                    placeholder="Enter your email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
+                                    Password
+                                </label>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    required
+                                    className="miami-input"
+                                    placeholder="Create a password"
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="admin_code" className="block text-sm font-medium text-white/80 mb-2">
+                                    Admin Code (Optional)
+                                </label>
+                                <input
+                                    id="admin_code"
+                                    name="admin_code"
+                                    type="password"
+                                    className="miami-input"
+                                    placeholder="Enter admin code if you have one"
+                                    value={formData.admin_code}
+                                    onChange={(e) => setFormData({ ...formData, admin_code: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        {formData.admin_code && (
+                            <div className="flex items-center">
+                                <input
+                                    id="is_admin"
+                                    name="is_admin"
+                                    type="checkbox"
+                                    className="h-4 w-4 rounded border-white/20 bg-white/10 checked:bg-[#00f0ff]"
+                                    checked={formData.is_admin}
+                                    onChange={(e) => setFormData({ ...formData, is_admin: e.target.checked })}
+                                />
+                                <label htmlFor="is_admin" className="ml-2 block text-sm text-white/80">
+                                    Register as Admin
+                                </label>
+                            </div>
+                        )}
+
+                        <Button
                             type="submit"
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            variant="primary"
+                            fullWidth
+                            className="mt-6"
                         >
-                            Register
-                        </button>
-                    </div>
-                </form>
+                            Create Account
+                        </Button>
+
+                        <div className="mt-4 text-center">
+                            <button
+                                type="button"
+                                onClick={() => navigate('/login')}
+                                className="text-white/60 hover:text-white text-sm transition-colors"
+                            >
+                                Already have an account? Sign in
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {/* Decorative Elements */}
+                <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
+                    <div className="absolute top-0 left-1/4 w-64 h-64 bg-[#00f0ff] rounded-full filter blur-[128px] opacity-20"></div>
+                    <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-[#ff69b4] rounded-full filter blur-[128px] opacity-20"></div>
+                </div>
             </div>
         </div>
     );

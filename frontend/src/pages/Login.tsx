@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Button from '../components/Button';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -28,7 +29,7 @@ const Login: React.FC = () => {
           <h1 className="text-4xl font-bold mb-2 miami-gradient bg-clip-text text-transparent">
             FitFlow
           </h1>
-          <p className="text-white/60">Your Personal Fitness Journey</p>
+          <p className="text-[#00f0ff]/80">Your Personal Fitness Journey</p>
         </div>
 
         {/* Login Card */}
@@ -79,31 +80,33 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-            <button
+            <Button
               type="submit"
-              className="miami-button w-full flex items-center justify-center"
+              variant="primary"
+              fullWidth
+              className="mt-6"
             >
               Sign in
-            </button>
+            </Button>
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-white/10"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-[#1a1a2e] text-white/40">Or</span>
+                <span className="px-2 bg-[#1a1a2e] text-[#00f0ff]/60">Or</span>
               </div>
             </div>
 
-            <button
+            <Button
               type="button"
+              variant="outline"
+              fullWidth
               onClick={() => navigate('/register')}
-              className="w-full px-6 py-3 rounded-xl font-semibold transition-all duration-300
-                       border border-white/20 text-white hover:bg-white/5
-                       hover:border-[#00f0ff] hover:shadow-lg hover:shadow-[#00f0ff]/10"
+              className="border-[#00f0ff] text-[#00f0ff] hover:bg-[#00f0ff]/10"
             >
               Create new account
-            </button>
+            </Button>
           </form>
         </div>
 
