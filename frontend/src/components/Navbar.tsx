@@ -175,7 +175,7 @@ const Navbar = () => {
                                     onClick={() => setIsOpen(!isOpen)}
                                     className="text-[#00f0ff] hover:text-purple-600 border-[#00f0ff] hover:bg-white transition-colors"
                                 >
-                                    {user?.username || 'Account'}
+                                    {user?.email || 'Account'}
                                 </Button>
                                 <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-[#1a1a2e] border border-[#00f0ff]/20 ${isOpen ? 'block' : 'hidden'}`}>
                                     {isAdmin && (
