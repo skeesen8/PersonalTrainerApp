@@ -26,7 +26,7 @@ const NavLink: React.FC<NavLinkProps> = ({
         <Link
             ref={linkRef}
             to={to}
-            className={`relative px-4 py-2 text-sm font-medium transition-colors duration-200
+            className={`relative px-4 py-2 text-sm font-medium transition-colors duration-200 no-underline
                 ${isActive 
                     ? 'text-white' 
                     : 'text-white/70 hover:text-white'
@@ -34,6 +34,7 @@ const NavLink: React.FC<NavLinkProps> = ({
             onClick={onClick}
             onMouseEnter={() => linkRef.current && onMouseEnter(linkRef.current)}
             onMouseLeave={onMouseLeave}
+            style={{ textDecoration: 'none' }}
         >
             {children}
         </Link>
@@ -110,9 +111,9 @@ const Navbar = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between h-16 items-center">
                     <div className="flex items-center">
-                        {/* <Link to="/" className="text-white text-2xl font-bold tracking-wider mr-8">
+                        <Link to="/" className="text-white text-2xl font-bold tracking-wider mr-8">
                             FitFlow
-                        </Link> */}
+                        </Link>
                         <div className="hidden md:flex relative space-x-1">
                             {isAuthenticated && (
                                 <>
@@ -155,6 +156,7 @@ const Navbar = () => {
                                 variant="secondary"
                                 size="sm"
                                 onClick={handleLogout}
+                                className="text-white hover:text-purple-600 border-white hover:bg-white transition-colors"
                             >
                                 Logout
                             </Button>
@@ -164,6 +166,7 @@ const Navbar = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => navigate('/login')}
+                                    className="text-white border-white hover:bg-white/10"
                                 >
                                     Login
                                 </Button>
@@ -171,6 +174,7 @@ const Navbar = () => {
                                     variant="primary"
                                     size="sm"
                                     onClick={() => navigate('/register')}
+                                    className="bg-white text-purple-600 hover:bg-purple-50"
                                 >
                                     Sign Up
                                 </Button>
@@ -183,8 +187,10 @@ const Navbar = () => {
                         <Button
                             variant="outline"
                             size="sm"
+                            className="text-white border-white hover:bg-white/10"
                             onClick={() => {}} // Add mobile menu toggle handler
                         >
+                            <span className="sr-only">Open menu</span>
                             <svg
                                 className="h-6 w-6"
                                 fill="none"

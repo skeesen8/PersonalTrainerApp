@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/Button';
 
@@ -71,9 +71,28 @@ const Login: React.FC = () => {
             </div>
           </div>
 
-          <Button type="submit" fullWidth size="lg">
-            Sign in
-          </Button>
+          <div className="flex flex-col space-y-4">
+            <Button type="submit" variant="primary" fullWidth size="lg">
+              Sign in
+            </Button>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or</span>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              fullWidth
+              size="lg"
+              onClick={() => navigate('/register')}
+            >
+              Create new account
+            </Button>
+          </div>
         </form>
       </div>
     </div>
