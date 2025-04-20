@@ -7,7 +7,7 @@ const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -15,7 +15,8 @@ const Login: React.FC = () => {
     setError('');
     try {
       await login(username, password);
-      navigate('/dashboard');
+      // Redirect based on user role
+      navigate(isAdmin ? '/admin' : '/dashboard');
     } catch (err) {
       setError('Invalid username or password');
     }
