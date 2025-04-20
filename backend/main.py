@@ -201,14 +201,26 @@ def create_meal_plan(
     """Create a meal plan"""
     with get_db() as db:
         if not current_user.is_admin:
+            logger.warning(f"Non-admin user {current_user.id} attempted to create meal plan")
             raise HTTPException(status_code=403, detail="Not authorized to create meal plans")
         
-        # Verify the assigned user belongs to this admin
+        # Get the assigned user
         assigned_user = crud.get_user(db, meal_plan.assigned_user_id)
-        if not assigned_user or assigned_user.id not in [u.id for u in current_user.assigned_users]:
-            raise HTTPException(status_code=403, detail="Not authorized to create plans for this user")
+        if not assigned_user:
+            logger.warning(f"Assigned user {meal_plan.assigned_user_id} not found")
+            raise HTTPException(status_code=404, detail="Assigned user not found")
         
-        return crud.create_meal_plan(db=db, meal_plan=meal_plan)
+        # First, ensure the admin-user relationship exists
+        if assigned_user not in current_user.assigned_users:
+            logger.info(f"Creating admin-user relationship: admin={current_user.id}, user={assigned_user.id}")
+            crud.assign_user_to_admin(db, admin_id=current_user.id, user_id=assigned_user.id)
+        
+        # Now create the meal plan
+        try:
+            return crud.create_meal_plan(db=db, meal_plan=meal_plan)
+        except Exception as e:
+            logger.error(f"Error creating meal plan: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/workout-plans/user", response_model=List[schemas.WorkoutPlan])
 def read_user_workout_plans(
@@ -250,4 +262,12 @@ def read_meal_plans(
             meal_plans = crud.get_meal_plans(db, skip=skip, limit=limit)
         else:
             meal_plans = crud.get_user_meal_plans(db, user_id=current_user.id, skip=skip, limit=limit)
-        return meal_plans 
+        return meal_plans
+
+@app.get("/users/assigned", response_model=List[schemas.User])
+def read_assigned_users(current_user: models.User = Depends(get_current_user)):
+    """Get users assigned to the current admin"""
+    with get_db() as db:
+        if not current_user.is_admin:
+            raise HTTPException(status_code=403, detail="Not authorized to view users")
+        return current_user.assigned_users 
