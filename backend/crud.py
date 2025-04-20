@@ -75,17 +75,22 @@ def get_user_meal_plans(db: Session, user_id: int, skip: int = 0, limit: int = 1
     return db.query(models.MealPlan).filter(models.MealPlan.user_id == user_id).offset(skip).limit(limit).all()
 
 def create_meal_plan(db: Session, meal_plan: schemas.MealPlanCreate):
-    db_meal_plan = models.MealPlan(
-        title=meal_plan.title,
-        description=meal_plan.description,
-        meals=json.dumps([meal.dict() for meal in meal_plan.meals]),
-        user_id=meal_plan.assigned_user_id,
-        scheduled_date=meal_plan.date
-    )
-    db.add(db_meal_plan)
-    db.commit()
-    db.refresh(db_meal_plan)
-    return db_meal_plan
+    try:
+        db_meal_plan = models.MealPlan(
+            title=meal_plan.title,
+            description=meal_plan.description,
+            meals=json.dumps([meal.dict() for meal in meal_plan.meals]),
+            user_id=meal_plan.assigned_user_id,
+            scheduled_date=meal_plan.date
+        )
+        db.add(db_meal_plan)
+        db.commit()
+        db.refresh(db_meal_plan)
+        return db_meal_plan
+    except Exception as e:
+        db.rollback()
+        print(f"Error creating meal plan: {str(e)}")
+        raise
 
 def authenticate_user(db: Session, email: str, password: str):
     user = get_user_by_email(db, email)

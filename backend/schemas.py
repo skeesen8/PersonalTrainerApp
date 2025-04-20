@@ -77,6 +77,30 @@ class MealPlanBase(BaseModel):
     meals: List[Meal]
     assigned_user_id: int
 
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "title": "Sample Meal Plan",
+                    "description": "A balanced meal plan for the day",
+                    "date": "2025-04-20T18:07:48.990Z",
+                    "meals": [
+                        {
+                            "name": "Breakfast",
+                            "time": "08:00",
+                            "calories": 500,
+                            "protein": 25,
+                            "carbs": 60,
+                            "fats": 20,
+                            "ingredients": "Oatmeal, banana, almonds, protein powder"
+                        }
+                    ],
+                    "assigned_user_id": 5
+                }
+            ]
+        }
+    }
+
 class MealPlanCreate(MealPlanBase):
     pass
 
