@@ -7,6 +7,7 @@ const axiosInstance = axios.create({
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json'
     },
 });
 
@@ -28,6 +29,9 @@ axiosInstance.interceptors.request.use(
         if (config.baseURL?.endsWith('/')) {
             config.baseURL = config.baseURL.slice(0, -1);
         }
+        
+        // Ensure credentials are included
+        config.withCredentials = true;
         
         console.log('Request:', config);
         return config;
@@ -58,6 +62,13 @@ axiosInstance.interceptors.response.use(
         } else if (error.request) {
             // The request was made but no response was received
             console.error('No response received:', error.request);
+            // Log additional details about the request
+            console.error('Request details:', {
+                url: error.config?.url,
+                method: error.config?.method,
+                headers: error.config?.headers,
+                data: error.config?.data
+            });
         } else {
             // Something happened in setting up the request
             console.error('Error setting up request:', error.message);
