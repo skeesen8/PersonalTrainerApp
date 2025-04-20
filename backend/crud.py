@@ -19,8 +19,23 @@ def get_user(db: Session, user_id: int):
 def get_user_by_email(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
-def get_users(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.User).filter(models.User.is_admin == False).offset(skip).limit(limit).all()
+def get_users(db: Session, skip: int = 0, limit: int = 100, admin_id: int = None):
+    """Get users with optional filtering by admin assignment"""
+    query = db.query(models.User).filter(models.User.is_admin == False)
+    
+    if admin_id:
+        admin = db.query(models.User).filter(models.User.id == admin_id).first()
+        if admin and admin.is_admin:
+            return admin.assigned_users[skip:skip + limit]
+    
+    return query.offset(skip).limit(limit).all()
+
+def get_admin_users(db: Session, admin_id: int):
+    """Get all users assigned to a specific admin"""
+    admin = db.query(models.User).filter(models.User.id == admin_id).first()
+    if admin and admin.is_admin:
+        return admin.assigned_users
+    return []
 
 def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = get_password_hash(user.password)
