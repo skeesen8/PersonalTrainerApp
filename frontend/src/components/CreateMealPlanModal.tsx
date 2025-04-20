@@ -18,6 +18,7 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    date: new Date().toISOString().split('T')[0],
     meals: [{
       name: '',
       time: '',
@@ -35,10 +36,11 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
   useEffect(() => {
     const fetchAssignedUsers = async () => {
       try {
-        const response = await api.get('/users/assigned');
-        setAssignedUsers(response.data);
+        const response = await api.get('/users/');
+        setAssignedUsers(response.data.filter((user: User) => user.id !== 1));
       } catch (err) {
-        console.error('Failed to fetch assigned users:', err);
+        console.error('Failed to fetch users:', err);
+        setError('Failed to fetch users');
       }
     };
 
@@ -126,6 +128,19 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
 
           <div>
             <label className="block text-white/80 text-sm font-medium mb-2">
+              Date
+            </label>
+            <input
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              className="miami-input"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-white/80 text-sm font-medium mb-2">
               Assign to User
             </label>
             <select
@@ -137,7 +152,7 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
               <option value="">Select a user</option>
               {assignedUsers.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.full_name} ({user.email})
+                  {user.full_name || user.email}
                 </option>
               ))}
             </select>
