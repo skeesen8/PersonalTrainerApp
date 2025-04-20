@@ -13,13 +13,20 @@ const axiosInstance = axios.create({
 // Request interceptor
 axiosInstance.interceptors.request.use(
     (config) => {
-        // For token requests, ensure correct content type and remove trailing slash from baseURL
+        // Get the token from localStorage
+        const token = localStorage.getItem('token');
+        
+        // For token requests, ensure correct content type
         if (config.url?.includes('/token')) {
             config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-            // Remove trailing slash if present in baseURL
-            if (config.baseURL?.endsWith('/')) {
-                config.baseURL = config.baseURL.slice(0, -1);
-            }
+        } else if (token) {
+            // For all other requests, add the Authorization header if we have a token
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        // Remove trailing slash if present in baseURL
+        if (config.baseURL?.endsWith('/')) {
+            config.baseURL = config.baseURL.slice(0, -1);
         }
         
         console.log('Request:', config);
@@ -34,7 +41,6 @@ axiosInstance.interceptors.request.use(
 // Response interceptor
 axiosInstance.interceptors.response.use(
     (response) => {
-        console.log('Response:', response);
         return response;
     },
     (error) => {
@@ -43,6 +49,12 @@ axiosInstance.interceptors.response.use(
             // that falls out of the range of 2xx
             console.error('Response error data:', error.response.data);
             console.error('Response error status:', error.response.status);
+            
+            // If we get a 401 Unauthorized error, redirect to login
+            if (error.response.status === 401) {
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            }
         } else if (error.request) {
             // The request was made but no response was received
             console.error('No response received:', error.request);
