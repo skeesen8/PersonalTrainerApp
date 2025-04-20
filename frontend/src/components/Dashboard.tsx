@@ -33,7 +33,7 @@ const Dashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom>
-            Welcome, {user.full_name}!
+            Welcome, {user!.full_name}!
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
             Your personal fitness journey starts here
