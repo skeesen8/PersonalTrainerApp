@@ -36,18 +36,32 @@ def create_user(db: Session, user: schemas.UserCreate):
     return db_user
 
 def assign_user_to_admin(db: Session, admin_id: int, user_id: int):
-    admin = db.query(models.User).filter(models.User.id == admin_id).first()
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    
-    if not admin or not user:
-        return None
-    
-    if not admin.is_admin:
-        return None
-    
-    admin.assigned_users.append(user)
-    db.commit()
-    return user
+    """Assign a user to an admin"""
+    try:
+        admin = db.query(models.User).filter(models.User.id == admin_id).first()
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        
+        if not admin or not user:
+            print(f"Admin or user not found: admin_id={admin_id}, user_id={user_id}")
+            return None
+        
+        if not admin.is_admin:
+            print(f"User {admin_id} is not an admin")
+            return None
+        
+        # Check if the relationship already exists
+        if user not in admin.assigned_users:
+            admin.assigned_users.append(user)
+            db.commit()
+            print(f"Successfully assigned user {user_id} to admin {admin_id}")
+        else:
+            print(f"User {user_id} is already assigned to admin {admin_id}")
+        
+        return user
+    except Exception as e:
+        print(f"Error assigning user to admin: {str(e)}")
+        db.rollback()
+        raise
 
 def get_workout_plans(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.WorkoutPlan).offset(skip).limit(limit).all()

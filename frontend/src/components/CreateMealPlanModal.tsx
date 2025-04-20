@@ -36,11 +36,11 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
   useEffect(() => {
     const fetchAssignedUsers = async () => {
       try {
-        const response = await api.get('/users/');
-        setAssignedUsers(response.data.filter((user: User) => user.id !== 1));
+        const response = await api.get('/users/assigned');
+        setAssignedUsers(response.data);
       } catch (err) {
-        console.error('Failed to fetch users:', err);
-        setError('Failed to fetch users');
+        console.error('Failed to fetch assigned users:', err);
+        setError('Failed to fetch assigned users');
       }
     };
 
