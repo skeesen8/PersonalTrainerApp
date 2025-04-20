@@ -10,26 +10,41 @@ import Navbar from './components/Navbar';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './styles/theme.css';
 
-// Protected Route component
+// Protected Route component for regular users
 const ProtectedRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
     const { isAuthenticated } = useAuth();
     return isAuthenticated ? element : <Navigate to="/login" />;
 };
 
+// Protected Route component for admin users
+const AdminRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
+    const { isAuthenticated, isAdmin } = useAuth();
+    if (!isAuthenticated) return <Navigate to="/login" />;
+    if (!isAdmin) return <Navigate to="/dashboard" />;
+    return element;
+};
+
 const AppRoutes: React.FC = () => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isAdmin } = useAuth();
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black">
+            {isAuthenticated && <Navbar />}
             <main>
                 <Routes>
                     <Route 
                         path="/login" 
-                        element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />} 
+                        element={isAuthenticated ? 
+                            <Navigate to={isAdmin ? "/admin" : "/dashboard"} /> 
+                            : <Login />
+                        } 
                     />
                     <Route 
                         path="/register" 
-                        element={isAuthenticated ? <Navigate to="/dashboard" /> : <Register />} 
+                        element={isAuthenticated ? 
+                            <Navigate to={isAdmin ? "/admin" : "/dashboard"} /> 
+                            : <Register />
+                        } 
                     />
                     <Route
                         path="/dashboard"
@@ -45,9 +60,15 @@ const AppRoutes: React.FC = () => {
                     />
                     <Route
                         path="/admin"
-                        element={<ProtectedRoute element={<AdminDashboard />} />}
+                        element={<AdminRoute element={<AdminDashboard />} />}
                     />
-                    <Route path="/" element={<Navigate to="/dashboard" />} />
+                    <Route 
+                        path="/" 
+                        element={<Navigate to={isAuthenticated ? 
+                            (isAdmin ? "/admin" : "/dashboard") 
+                            : "/login"} 
+                        />} 
+                    />
                 </Routes>
             </main>
         </div>
