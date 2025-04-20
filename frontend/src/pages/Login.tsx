@@ -16,7 +16,11 @@ const Login: React.FC = () => {
     try {
       await login(username, password);
       // Redirect based on user role
-      navigate(isAdmin ? '/admin' : '/dashboard');
+      if (isAdmin) {
+        window.location.href = 'https://personal-trainer-app-topaz.vercel.app/admin';
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError('Invalid username or password');
     }
