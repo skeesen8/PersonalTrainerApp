@@ -14,22 +14,16 @@ interface User {
   full_name: string;
 }
 
+const initialFormData = {
+  title: '',
+  description: '',
+  date: new Date().toISOString().split('T')[0],
+  meals: [{ name: '', time: '', calories: '', protein: '', carbs: '', fats: '', ingredients: '' }],
+  assigned_user_id: ''
+};
+
 const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClose, onMealPlanCreated }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    date: new Date().toISOString().split('T')[0],
-    meals: [{
-      name: '',
-      time: '',
-      calories: '',
-      protein: '',
-      carbs: '',
-      fats: '',
-      ingredients: ''
-    }],
-    assigned_user_id: ''
-  });
+  const [formData, setFormData] = useState(initialFormData);
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
   const [error, setError] = useState('');
 
@@ -79,31 +73,21 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
     e.preventDefault();
     setError('');
     try {
-      // Format data to match backend schema
-      const formattedData = {
-        title: formData.title,
-        description: formData.description,
-        date: new Date(formData.date).toISOString(),
-        meals: formData.meals.map(meal => ({
-          name: meal.name,
-          time: meal.time,
-          calories: Number(meal.calories),
-          protein: Number(meal.protein),
-          carbs: Number(meal.carbs),
-          fats: Number(meal.fats),
-          ingredients: meal.ingredients
-        })),
-        assigned_user_id: Number(formData.assigned_user_id)
-      };
-      
-      await api.post('/meal-plans/', formattedData);
+      await api.post('/meal-plans/', formData);
       onMealPlanCreated();
+      setFormData(initialFormData);
       onClose();
     } catch (err: any) {
-      const errorDetail = err.response?.data?.detail;
-      setError(Array.isArray(errorDetail) ? errorDetail[0].msg : (errorDetail || 'Failed to create meal plan'));
+      setError(err.response?.data?.detail || 'Failed to create meal plan');
     }
   };
+
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData(initialFormData);
+      setError('');
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

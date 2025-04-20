@@ -14,14 +14,16 @@ interface User {
   full_name: string;
 }
 
+const initialFormData = {
+  title: '',
+  description: '',
+  date: new Date().toISOString().split('T')[0],
+  exercises: [{ name: '', sets: '', reps: '', weight: '' }],
+  assigned_user_id: ''
+};
+
 const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose, onWorkoutCreated }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    date: new Date().toISOString().split('T')[0],
-    exercises: [{ name: '', sets: '', reps: '', weight: '' }],
-    assigned_user_id: ''
-  });
+  const [formData, setFormData] = useState(initialFormData);
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
   const [error, setError] = useState('');
 
@@ -65,11 +67,19 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
     try {
       await api.post('/workout-plans/', formData);
       onWorkoutCreated();
+      setFormData(initialFormData);
       onClose();
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to create workout plan');
     }
   };
+
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData(initialFormData);
+      setError('');
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
