@@ -1,13 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import Navbar from './Navbar';
+import AddUserModal from './AddUserModal';
+import CreateWorkoutModal from './CreateWorkoutModal';
+import CreateMealPlanModal from './CreateMealPlanModal';
 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
+  const [isMealPlanModalOpen, setIsMealPlanModalOpen] = useState(false);
+
+  const handleUserAdded = () => {
+    // Refresh user list or show success message
+    console.log('User added successfully');
+  };
+
+  const handleWorkoutCreated = () => {
+    // Refresh workout list or show success message
+    console.log('Workout plan created successfully');
+  };
+
+  const handleMealPlanCreated = () => {
+    // Refresh meal plan list or show success message
+    console.log('Meal plan created successfully');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a1a2e] to-[#2a2a4e]">
-      <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="miami-card p-8">
           <div className="mb-8">
@@ -59,7 +78,10 @@ const AdminDashboard: React.FC = () => {
           <div className="mt-8">
             <h2 className="text-2xl font-bold text-white mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <button className="miami-card p-4 text-center hover-scale">
+              <button 
+                className="miami-card p-4 text-center hover-scale"
+                onClick={() => setIsAddUserModalOpen(true)}
+              >
                 <span className="text-[#00f0ff] block mb-2">➕</span>
                 <span className="text-white">Add User</span>
               </button>
@@ -67,17 +89,40 @@ const AdminDashboard: React.FC = () => {
                 <span className="text-[#00f0ff] block mb-2">📊</span>
                 <span className="text-white">View Reports</span>
               </button>
-              <button className="miami-card p-4 text-center hover-scale">
+              <button 
+                className="miami-card p-4 text-center hover-scale"
+                onClick={() => setIsWorkoutModalOpen(true)}
+              >
                 <span className="text-[#00f0ff] block mb-2">🏋️‍♂️</span>
                 <span className="text-white">New Workout</span>
               </button>
-              <button className="miami-card p-4 text-center hover-scale">
+              <button 
+                className="miami-card p-4 text-center hover-scale"
+                onClick={() => setIsMealPlanModalOpen(true)}
+              >
                 <span className="text-[#00f0ff] block mb-2">🥗</span>
                 <span className="text-white">New Meal Plan</span>
               </button>
             </div>
           </div>
         </div>
+
+        {/* Modals */}
+        <AddUserModal
+          isOpen={isAddUserModalOpen}
+          onClose={() => setIsAddUserModalOpen(false)}
+          onUserAdded={handleUserAdded}
+        />
+        <CreateWorkoutModal
+          isOpen={isWorkoutModalOpen}
+          onClose={() => setIsWorkoutModalOpen(false)}
+          onWorkoutCreated={handleWorkoutCreated}
+        />
+        <CreateMealPlanModal
+          isOpen={isMealPlanModalOpen}
+          onClose={() => setIsMealPlanModalOpen(false)}
+          onMealPlanCreated={handleMealPlanCreated}
+        />
 
         {/* Decorative Elements */}
         <div className="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden -z-10">
