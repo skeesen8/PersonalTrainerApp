@@ -36,14 +36,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('user');
         setToken(null);
         setUser(null);
+        // Clear token from axios default headers
+        delete api.defaults.headers.common['Authorization'];
     };
 
     const fetchUserData = async () => {
         if (!token) return;
         try {
-            const response = await api.get('/users/me', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            // Set token in axios default headers
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            const response = await api.get('/users/me');
             setUser(response.data);
             localStorage.setItem('user', JSON.stringify(response.data));
         } catch (error) {
@@ -61,7 +63,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const response = await api.post('/token', formData.toString());
             
             if (response.data.access_token) {
-                setToken(response.data.access_token);
+                const newToken = response.data.access_token;
+                localStorage.setItem('token', newToken);
+                setToken(newToken);
+                // Set token in axios default headers
+                api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
                 // After getting the token, fetch user data
                 await fetchUserData();
             } else {
@@ -73,12 +79,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    // Set up initial axios headers when component mounts
     useEffect(() => {
         if (token) {
-            localStorage.setItem('token', token);
+            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             fetchUserData();
         }
-    }, [token]);
+    }, []);
 
     return (
         <AuthContext.Provider value={{ token, user, setToken, isAuthenticated, isAdmin, logout, login }}>
