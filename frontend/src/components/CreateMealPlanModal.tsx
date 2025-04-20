@@ -79,7 +79,18 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
     e.preventDefault();
     setError('');
     try {
-      await api.post('/meal-plans/', formData);
+      // Convert string values to numbers
+      const formattedData = {
+        ...formData,
+        meals: formData.meals.map(meal => ({
+          ...meal,
+          calories: Number(meal.calories),
+          protein: Number(meal.protein),
+          carbs: Number(meal.carbs),
+          fats: Number(meal.fats)
+        }))
+      };
+      await api.post('/meal-plans/', formattedData);
       onMealPlanCreated();
       onClose();
     } catch (err: any) {

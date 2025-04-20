@@ -46,7 +46,7 @@ const WorkoutPlan: React.FC = () => {
   useEffect(() => {
     const fetchWorkoutPlans = async () => {
       try {
-        const response = await api.get('/workouts/user');
+        const response = await api.get('/workout-plans/user');
         setWorkoutPlans(response.data);
         setLoading(false);
       } catch (err) {

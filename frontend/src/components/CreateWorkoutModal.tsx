@@ -63,7 +63,7 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
     e.preventDefault();
     setError('');
     try {
-      await api.post('/workouts/', formData);
+      await api.post('/workout-plans/', formData);
       onWorkoutCreated();
       onClose();
     } catch (err: any) {
