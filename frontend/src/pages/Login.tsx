@@ -2,27 +2,28 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/Button';
+import { Link } from 'react-router-dom';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     try {
       await login(username, password);
-      // Redirect based on user role
-      if (isAdmin) {
-        window.location.href = 'https://personal-trainer-app-topaz.vercel.app/admin';
-      } else {
-        navigate('/dashboard');
-      }
+      // Use navigate for both cases
+      navigate(isAdmin ? '/admin' : '/dashboard', { replace: true });
     } catch (err) {
       setError('Invalid username or password');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -44,75 +45,47 @@ const Login: React.FC = () => {
             <p className="text-white/60 text-sm">Sign in to continue your fitness journey</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl text-sm text-center">
-                {error}
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="username" className="block text-sm font-medium text-white/80 mb-2">
-                  Username
-                </label>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="miami-input"
-                  placeholder="Enter your username"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="miami-input"
-                  placeholder="Enter your password"
-                />
-              </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <input
+                type="email"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Email"
+                className="w-full px-4 py-3 rounded-lg bg-[#2a2a4e]/50 border border-[#00f0ff]/20 text-white placeholder-white/50 focus:outline-none focus:border-[#00f0ff]/50 transition-colors"
+                required
+              />
             </div>
-
+            <div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                className="w-full px-4 py-3 rounded-lg bg-[#2a2a4e]/50 border border-[#00f0ff]/20 text-white placeholder-white/50 focus:outline-none focus:border-[#00f0ff]/50 transition-colors"
+                required
+              />
+            </div>
+            {error && (
+              <div className="text-red-400 text-sm text-center">{error}</div>
+            )}
             <Button
               type="submit"
-              variant="primary"
-              fullWidth
-              className="mt-6"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white py-3 rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              Sign in
-            </Button>
-
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-[#1a1a2e] text-[#00f0ff]/60">Or</span>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              fullWidth
-              onClick={() => navigate('/register')}
-              className="border-[#00f0ff] text-[#00f0ff] hover:bg-[#00f0ff]/10"
-            >
-              Create new account
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
+
+          <div className="text-center">
+            <p className="text-white/60">
+              Don't have an account?{' '}
+              <Link to="/register" className="text-[#00f0ff] hover:text-[#00f0ff]/80 transition-colors">
+                Sign up
+              </Link>
+            </p>
+          </div>
         </div>
 
         {/* Decorative Elements */}
