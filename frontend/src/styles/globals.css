@@ -2,11 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --primary: #1976d2;
-  --secondary: #dc004e;
-}
-
+/* Base styles */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -22,14 +18,20 @@ a {
   color: inherit;
 }
 
-/* Ensure full height layout */
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+/* Custom gradients */
+.gradient-primary {
+  @apply bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500;
 }
 
-/* Main content area */
+.gradient-background {
+  @apply bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50;
+}
+
+/* Ensure proper layout structure */
+#root {
+  @apply min-h-screen flex flex-col;
+}
+
 main {
-  flex: 1;
+  @apply flex-1;
 } 

@@ -20,9 +20,8 @@ const AppRoutes: React.FC = () => {
     const { isAuthenticated } = useAuth();
 
     return (
-        <div className="app-container">
-            {/* <Navbar /> */}
-            <main className="main-content">
+        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50">
+            <main className="min-h-screen">
                 <Routes>
                     <Route 
                         path="/login" 
