@@ -79,21 +79,21 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
     e.preventDefault();
     setError('');
     try {
-      // Convert string values to numbers and format data
+      // Format data to match backend schema
       const formattedData = {
         title: formData.title,
         description: formData.description,
-        scheduled_date: new Date(formData.date).toISOString(),
-        meals: JSON.stringify(
-          formData.meals.map(meal => ({
-            ...meal,
-            calories: Number(meal.calories),
-            protein: Number(meal.protein),
-            carbs: Number(meal.carbs),
-            fats: Number(meal.fats)
-          }))
-        ),
-        user_id: Number(formData.assigned_user_id)
+        date: new Date(formData.date).toISOString(),
+        meals: formData.meals.map(meal => ({
+          name: meal.name,
+          time: meal.time,
+          calories: Number(meal.calories),
+          protein: Number(meal.protein),
+          carbs: Number(meal.carbs),
+          fats: Number(meal.fats),
+          ingredients: meal.ingredients
+        })),
+        assigned_user_id: Number(formData.assigned_user_id)
       };
       
       await api.post('/meal-plans/', formattedData);
