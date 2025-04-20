@@ -79,22 +79,29 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
     e.preventDefault();
     setError('');
     try {
-      // Convert string values to numbers
+      // Convert string values to numbers and format data
       const formattedData = {
-        ...formData,
-        meals: formData.meals.map(meal => ({
-          ...meal,
-          calories: Number(meal.calories),
-          protein: Number(meal.protein),
-          carbs: Number(meal.carbs),
-          fats: Number(meal.fats)
-        }))
+        title: formData.title,
+        description: formData.description,
+        scheduled_date: new Date(formData.date).toISOString(),
+        meals: JSON.stringify(
+          formData.meals.map(meal => ({
+            ...meal,
+            calories: Number(meal.calories),
+            protein: Number(meal.protein),
+            carbs: Number(meal.carbs),
+            fats: Number(meal.fats)
+          }))
+        ),
+        user_id: Number(formData.assigned_user_id)
       };
+      
       await api.post('/meal-plans/', formattedData);
       onMealPlanCreated();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to create meal plan');
+      const errorDetail = err.response?.data?.detail;
+      setError(Array.isArray(errorDetail) ? errorDetail[0].msg : (errorDetail || 'Failed to create meal plan'));
     }
   };
 
