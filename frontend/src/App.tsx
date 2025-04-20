@@ -8,7 +8,7 @@ import MealPlan from './components/MealPlan';
 import AdminDashboard from './components/AdminDashboard';
 import Navbar from './components/Navbar';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import './styles/globals.css';
+import './styles/theme.css';
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
@@ -20,8 +20,8 @@ const AppRoutes: React.FC = () => {
     const { isAuthenticated } = useAuth();
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50">
-            <main className="min-h-screen">
+        <div className="min-h-screen">
+            <main>
                 <Routes>
                     <Route 
                         path="/login" 

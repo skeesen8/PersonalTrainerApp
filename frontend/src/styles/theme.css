@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Miami-inspired Color Palette */
+:root {
+  --miami-teal: #00f0ff;
+  --miami-pink: #ff69b4;
+  --miami-purple: #9d4edd;
+  --miami-orange: #ff8c42;
+  --miami-blue: #3a86ff;
+  --miami-night: #1a1a2e;
+  --miami-light: #f8f9fa;
+}
+
+/* Modern Typography */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-gradient-to-br from-[#1a1a2e] to-[#2a2a4e] text-white min-h-screen;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+}
+
+/* Custom Utility Classes */
+@layer components {
+  .miami-gradient {
+    @apply bg-gradient-to-r from-[#00f0ff] via-[#ff69b4] to-[#ff8c42];
+  }
+
+  .miami-card {
+    @apply bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 shadow-xl;
+  }
+
+  .miami-button {
+    @apply px-6 py-3 rounded-xl font-semibold transition-all duration-300 
+           bg-gradient-to-r from-[#00f0ff] to-[#ff69b4] hover:from-[#ff69b4] hover:to-[#00f0ff]
+           hover:shadow-lg hover:shadow-[#00f0ff]/20 focus:ring-2 focus:ring-[#00f0ff]/50;
+  }
+
+  .miami-input {
+    @apply w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl
+           placeholder-white/50 focus:outline-none focus:border-[#00f0ff]
+           focus:ring-2 focus:ring-[#00f0ff]/50 transition-all duration-300;
+  }
+
+  .glass-effect {
+    @apply backdrop-blur-lg bg-white/10 border border-white/20;
+  }
+
+  .neon-glow {
+    @apply shadow-lg shadow-[#00f0ff]/20;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+}
+
+/* Animation Keyframes */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.float-animation {
+  animation: float 3s ease-in-out infinite;
+} 
