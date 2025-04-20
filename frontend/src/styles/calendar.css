@@ -1,0 +1,61 @@
+@import 'react-calendar/dist/Calendar.css';
+
+/* Custom calendar styling */
+.react-calendar {
+  width: 100%;
+  background: transparent !important;
+  border: none !important;
+  font-family: inherit;
+}
+
+.react-calendar button {
+  color: white !important;
+  background: transparent !important;
+}
+
+.react-calendar button:enabled:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.react-calendar__tile--now {
+  background: rgba(0, 240, 255, 0.1) !important;
+}
+
+.react-calendar__tile--active {
+  background: rgba(0, 240, 255, 0.2) !important;
+}
+
+.react-calendar__tile--active:enabled:hover {
+  background: rgba(0, 240, 255, 0.3) !important;
+}
+
+.react-calendar__tile--hasContent {
+  background: rgba(0, 240, 255, 0.05) !important;
+  color: #00f0ff !important;
+}
+
+.react-calendar__navigation button {
+  color: #00f0ff !important;
+}
+
+.react-calendar__navigation button:disabled {
+  opacity: 0.5;
+}
+
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus {
+  background-color: rgba(0, 240, 255, 0.1) !important;
+}
+
+.react-calendar__month-view__weekdays {
+  color: #00f0ff !important;
+  font-weight: bold;
+}
+
+.react-calendar__month-view__days__day--weekend {
+  color: #ff69b4 !important;
+}
+
+.react-calendar__month-view__days__day--neighboringMonth {
+  opacity: 0.5;
+} 
