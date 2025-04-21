@@ -13,6 +13,7 @@ import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 import json
+from cors_config import setup_cors
 
 # Load environment variables
 load_dotenv()
@@ -36,14 +37,8 @@ allowed_origins = [
     "https://scintillating-harmony-production.up.railway.app"
 ]
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
+# Use the CORS configuration from cors_config.py
+setup_cors(app, allowed_origins)
 
 logger.info("Starting application with configuration:")
 logger.info(f"Current working directory: {os.getcwd()}")
@@ -123,23 +118,47 @@ async def startup_event():
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 @app.post("/token")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    OAuth2 compatible token login, get an access token for future requests
+    """
     logger.info(f"Login attempt for user: {form_data.username}")
-    with get_db() as db:
-        user = crud.authenticate_user(db, form_data.username, form_data.password)
-        if user is None:
-            logger.warning(f"Authentication failed for user: {form_data.username}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect username or password",
-                headers={"WWW-Authenticate": "Bearer"},
+    try:
+        with get_db() as db:
+            user = crud.authenticate_user(db, form_data.username, form_data.password)
+            if user is None:
+                logger.warning(f"Authentication failed for user: {form_data.username}")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Incorrect username or password",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            
+            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            access_token = create_access_token(
+                data={"sub": user.email}, expires_delta=access_token_expires
             )
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
-            data={"sub": user.email}, expires_delta=access_token_expires
+            logger.info(f"Login successful for user: {form_data.username}")
+            
+            # Create response with proper headers
+            response = JSONResponse(
+                content={"access_token": access_token, "token_type": "bearer"}
+            )
+            
+            # Add CORS headers
+            origin = request.headers.get("origin")
+            if origin in allowed_origins:
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+            
+            return response
+            
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred during login"
         )
-        logger.info(f"Login successful for user: {form_data.username}")
-        return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/users/me", response_model=schemas.User)
 def read_users_me(current_user: models.User = Depends(get_current_user)):
