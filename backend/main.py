@@ -238,16 +238,6 @@ async def create_meal_plan(
         # Log the incoming request data
         logger.info(f"Creating meal plan for user {meal_plan.assigned_user_id}")
         
-        # Refresh current user to ensure relationships are loaded
-        try:
-            db.refresh(current_user)
-        except Exception as e:
-            logger.error(f"Error refreshing current user: {str(e)}")
-            raise HTTPException(
-                status_code=500,
-                detail="Database error while accessing user data"
-            )
-        
         # If no assigned_user_id is provided, create meal plan for self
         if not meal_plan.assigned_user_id:
             meal_plan.assigned_user_id = current_user.id
@@ -271,7 +261,16 @@ async def create_meal_plan(
                         detail="Assigned user not found"
                     )
                 
-                if assigned_user not in current_user.assigned_users:
+                # Query current user again to ensure relationships are up to date
+                current_user_fresh = crud.get_user(db, current_user.id)
+                if not current_user_fresh:
+                    logger.error("Could not refresh current user data")
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Error accessing user data"
+                    )
+                
+                if assigned_user.id not in [u.id for u in current_user_fresh.assigned_users]:
                     logger.warning(f"User {current_user.id} attempted to create meal plan for non-assigned user {meal_plan.assigned_user_id}")
                     raise HTTPException(
                         status_code=403,
@@ -290,9 +289,6 @@ async def create_meal_plan(
         try:
             db_meal_plan = crud.create_meal_plan(db, meal_plan)
             logger.info(f"Successfully created meal plan with ID: {db_meal_plan.id}")
-            
-            # Refresh to ensure all relationships are loaded
-            db.refresh(db_meal_plan)
             return db_meal_plan
             
         except Exception as e:
