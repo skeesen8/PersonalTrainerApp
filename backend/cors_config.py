@@ -115,7 +115,7 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         CORSMiddleware,
         allow_origins=allowed_origins,
         allow_credentials=False,
-        allow_methods=["GET", "POST", "PUT", DELETE, "OPTIONS", "PATCH"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         allow_headers=allowed_headers,
         expose_headers=["*"],
         max_age=3600,
