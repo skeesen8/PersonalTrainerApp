@@ -21,27 +21,9 @@ axiosInstance.interceptors.request.use(
         if (config.url?.includes('/token')) {
             config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
             delete config.headers['Authorization'];
-            // Ensure credentials are included for token requests
-            config.withCredentials = true;
-            
-            // Convert data to URLSearchParams format for token requests
-            if (config.data && typeof config.data === 'string') {
-                config.data = config.data; // Already in correct format
-            } else if (config.data && typeof config.data === 'object') {
-                const params = new URLSearchParams();
-                Object.entries(config.data).forEach(([key, value]) => {
-                    params.append(key, String(value));
-                });
-                config.data = params.toString();
-            }
         } else if (token) {
             // For all other requests, add the Authorization header if we have a token
             config.headers['Authorization'] = `Bearer ${token}`;
-        }
-        
-        // Remove trailing slash if present in baseURL
-        if (config.baseURL?.endsWith('/')) {
-            config.baseURL = config.baseURL.slice(0, -1);
         }
         
         // Log request details for debugging
