@@ -2,6 +2,42 @@ import axios from 'axios';
 
 const baseURL = process.env.REACT_APP_API_URL || 'https://scintillating-harmony-production.up.railway.app';
 
+// Debug utility functions
+const debugLog = {
+    request: (config: any) => {
+        console.group('🌐 API Request');
+        console.log('URL:', `${config.baseURL}${config.url}`);
+        console.log('Method:', config.method?.toUpperCase());
+        console.log('Headers:', config.headers);
+        if (config.data) {
+            console.log('Data:', config.data);
+        }
+        console.groupEnd();
+    },
+    response: (response: any) => {
+        console.group('✅ API Response');
+        console.log('Status:', response.status);
+        console.log('Headers:', response.headers);
+        console.log('Data:', response.data);
+        console.groupEnd();
+    },
+    error: (error: any) => {
+        console.group('❌ API Error');
+        if (error.response) {
+            console.log('Status:', error.response.status);
+            console.log('Headers:', error.response.headers);
+            console.log('Data:', error.response.data);
+        } else if (error.request) {
+            console.log('No response received');
+            console.log('Request:', error.request);
+        } else {
+            console.log('Error:', error.message);
+        }
+        console.log('Config:', error.config);
+        console.groupEnd();
+    }
+};
+
 const axiosInstance = axios.create({
     baseURL,
     withCredentials: true,
@@ -24,24 +60,18 @@ axiosInstance.interceptors.request.use(
         if (config.url?.includes('/token')) {
             config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
             delete config.headers['Authorization'];
-            delete config.headers['authorization']; // Remove lowercase version too
         } else if (token) {
             // For all other requests, add the Authorization header if we have a token
             config.headers['Authorization'] = `Bearer ${token}`;
         }
         
-        // Log request details for debugging
-        console.log('Request details:', {
-            url: config.url,
-            method: config.method,
-            headers: config.headers,
-            withCredentials: config.withCredentials
-        });
+        // Debug logging
+        debugLog.request(config);
         
         return config;
     },
     (error) => {
-        console.error('Request error:', error);
+        debugLog.error(error);
         return Promise.reject(error);
     }
 );
@@ -49,26 +79,18 @@ axiosInstance.interceptors.request.use(
 // Response interceptor
 axiosInstance.interceptors.response.use(
     (response) => {
+        debugLog.response(response);
         return response;
     },
     (error) => {
-        if (error.response) {
-            console.error('Response error:', {
-                data: error.response.data,
-                status: error.response.status,
-                headers: error.response.headers
-            });
-            
-            // Handle 401 Unauthorized
-            if (error.response.status === 401) {
-                localStorage.removeItem('token');
-                window.location.href = '/login';
-            }
-        } else if (error.request) {
-            console.error('No response received:', error.request);
-        } else {
-            console.error('Error setting up request:', error.message);
+        debugLog.error(error);
+        
+        if (error.response?.status === 401) {
+            console.warn('🔒 Authentication token expired or invalid');
+            localStorage.removeItem('token');
+            window.location.href = '/login';
         }
+        
         return Promise.reject(error);
     }
 );
