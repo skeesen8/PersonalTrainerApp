@@ -13,19 +13,19 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
     """
     Configure CORS for the FastAPI application with debug logging
     """
-    # Define all headers we want to allow
+    # Define all headers we want to allow - case sensitive!
     allowed_headers = [
-        "Content-Type",
-        "Accept",
-        "Authorization",
-        "Origin",
-        "X-Requested-With",
-        "Access-Control-Request-Method",
-        "Access-Control-Request-Headers",
-        "Content-Length",
-        "Accept-Encoding",
-        "Accept-Language",
-        "Cache-Control"
+        "accept",
+        "accept-encoding",
+        "authorization",
+        "content-type",
+        "dnt",
+        "origin",
+        "user-agent",
+        "x-requested-with",
+        "Access-Control-Allow-Headers",
+        "Access-Control-Allow-Origin",
+        "Access-Control-Request-Method"
     ]
 
     # Ensure the Vercel frontend origin is in the allowed origins
@@ -59,7 +59,8 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
                     "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
                 }
                 
-                logger.debug(f"Response Headers:\n{json.dumps(headers, indent=2)}")
+                # Log the actual headers being sent
+                logger.debug(f"Preflight Response Headers:\n{json.dumps(headers, indent=2)}")
                 return Response(status_code=204, headers=headers)
             
             return Response(status_code=204)
@@ -82,7 +83,9 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         
         return response
 
-    # Add the CORS middleware
+    # Remove the CORSMiddleware since we're handling everything in our custom middleware
+    # This prevents potential conflicts between the two CORS handlers
+    app.middleware_stack = None  # Clear existing middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,
