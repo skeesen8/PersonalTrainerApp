@@ -49,10 +49,26 @@ def get_users(db: Session, skip: int = 0, limit: int = 100, admin_id: int = None
 
 def get_admin_users(db: Session, admin_id: int):
     """Get all users assigned to a specific admin"""
-    admin = db.query(models.User).filter(models.User.id == admin_id).first()
-    if admin and admin.is_admin:
-        return admin.assigned_users
-    return []
+    try:
+        # Get admin with assigned_users relationship loaded
+        admin = db.query(models.User).options(
+            joinedload(models.User.assigned_users)
+        ).filter(
+            models.User.id == admin_id,
+            models.User.is_admin == True
+        ).first()
+        
+        if not admin:
+            print(f"Admin not found or user is not an admin: admin_id={admin_id}")
+            return []
+        
+        # Return assigned users or empty list
+        assigned_users = admin.assigned_users
+        print(f"Found {len(assigned_users)} assigned users for admin {admin_id}")
+        return assigned_users
+    except Exception as e:
+        print(f"Error in get_admin_users: {str(e)}")
+        raise
 
 def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = get_password_hash(user.password)
