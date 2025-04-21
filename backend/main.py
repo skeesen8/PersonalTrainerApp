@@ -232,10 +232,11 @@ def create_meal_plan(
     meal_plan: schemas.MealPlanCreate,
     current_user: models.User = Depends(get_current_user)
 ):
-    """Create a meal plan"""
+    """Create a new meal plan"""
     with get_db() as db:
-        if not current_user.is_admin:
-            logger.warning(f"Non-admin user {current_user.id} attempted to create meal plan")
+        # Refresh current user in this session
+        current_user_fresh = db.query(models.User).filter(models.User.id == current_user.id).first()
+        if not current_user_fresh.is_admin:
             raise HTTPException(status_code=403, detail="Not authorized to create meal plans")
         
         # Get the assigned user
@@ -244,10 +245,16 @@ def create_meal_plan(
             logger.warning(f"Assigned user {meal_plan.assigned_user_id} not found")
             raise HTTPException(status_code=404, detail="Assigned user not found")
         
-        # First, ensure the admin-user relationship exists
-        if assigned_user not in current_user.assigned_users:
-            logger.info(f"Creating admin-user relationship: admin={current_user.id}, user={assigned_user.id}")
-            crud.assign_user_to_admin(db, admin_id=current_user.id, user_id=assigned_user.id)
+        # Check if the user is already assigned to the admin
+        is_assigned = db.query(models.user_admin_association).filter(
+            models.user_admin_association.c.admin_id == current_user_fresh.id,
+            models.user_admin_association.c.user_id == assigned_user.id
+        ).first() is not None
+
+        # If not assigned, create the admin-user relationship
+        if not is_assigned:
+            logger.info(f"Creating admin-user relationship: admin={current_user_fresh.id}, user={assigned_user.id}")
+            crud.assign_user_to_admin(db, admin_id=current_user_fresh.id, user_id=assigned_user.id)
         
         # Now create the meal plan
         try:
