@@ -236,6 +236,13 @@ def create_meal_plan(
     """Create a new meal plan"""
     with get_db() as db:
         try:
+            # Validate assigned_user_id
+            if meal_plan.assigned_user_id <= 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail="assigned_user_id must be a positive integer. Please provide a valid user ID."
+                )
+
             # Refresh current user in this session
             current_user_fresh = db.query(models.User).filter(models.User.id == current_user.id).first()
             logger.info(f"Admin user {current_user_fresh.id} attempting to create meal plan for user {meal_plan.assigned_user_id}")
@@ -250,11 +257,14 @@ def create_meal_plan(
             
             if not assigned_user:
                 logger.error(f"User with ID {meal_plan.assigned_user_id} not found in database")
-                raise HTTPException(status_code=404, detail="Assigned user not found")
+                raise HTTPException(
+                    status_code=404, 
+                    detail=f"User with ID {meal_plan.assigned_user_id} not found. Please provide a valid user ID from your assigned users list."
+                )
             
             logger.info(f"Found assigned user: {assigned_user.email}")
             
-            # Check the admin-user relationship
+            # Check if the user is assigned to the admin
             relationship = db.query(models.admin_user_association).filter(
                 models.admin_user_association.c.admin_id == current_user_fresh.id,
                 models.admin_user_association.c.user_id == assigned_user.id
@@ -270,13 +280,13 @@ def create_meal_plan(
                 )
                 db.commit()
             
-            # Create the meal plan - note the mapping from assigned_user_id to user_id
+            # Create the meal plan
             logger.info(f"Creating meal plan with title: {meal_plan.title}")
             db_meal_plan = models.MealPlan(
                 title=meal_plan.title,
                 description=meal_plan.description,
                 meals=json.dumps([meal.dict() for meal in meal_plan.meals]),
-                user_id=meal_plan.assigned_user_id,  # Map assigned_user_id to user_id
+                user_id=meal_plan.assigned_user_id,
                 scheduled_date=meal_plan.date
             )
             db.add(db_meal_plan)
@@ -286,10 +296,15 @@ def create_meal_plan(
             logger.info(f"Successfully created meal plan with ID: {db_meal_plan.id}")
             return db_meal_plan
             
+        except HTTPException as he:
+            raise he
         except Exception as e:
             logger.error(f"Error in create_meal_plan: {str(e)}")
             db.rollback()
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(
+                status_code=500, 
+                detail=f"An error occurred while creating the meal plan: {str(e)}"
+            )
 
 @app.get("/workout-plans/user", response_model=List[schemas.WorkoutPlan])
 def read_user_workout_plans(
