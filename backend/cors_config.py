@@ -7,7 +7,7 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
     """
     Configure CORS for the FastAPI application
     """
-      # Define all headers we want to allow
+    # Define all headers we want to allow
     allowed_headers = [
         "Content-Type",
         "content-type",
@@ -25,6 +25,10 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         "access-control-request-headers"
     ]
 
+    # Ensure the Vercel frontend origin is in the allowed origins
+    if "https://personal-trainer-app-topaz.vercel.app" not in allowed_origins:
+        allowed_origins.append("https://personal-trainer-app-topaz.vercel.app")
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,
@@ -40,10 +44,10 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         # Handle preflight requests
         if request.method == "OPTIONS":
             response = Response(status_code=200)
-            origin = request.headers.get("origin")
+            origin = request.headers.get("origin", "").strip()
             
-            if origin in allowed_origins or "*" in allowed_origins:
-                response.headers["Access-Control-Allow-Origin"] = origin
+            if origin in allowed_origins:
+                response.headers["Access-Control-Allow-Origin"] = origin.strip()
                 response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
                 response.headers["Access-Control-Allow-Headers"] = ", ".join(allowed_headers)
                 response.headers["Access-Control-Allow-Credentials"] = "true"
@@ -52,10 +56,10 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
             
         response = await call_next(request)
         
-        # Get the origin from the request
-        origin = request.headers.get("origin")
-        if origin in allowed_origins or "*" in allowed_origins:
-            response.headers["Access-Control-Allow-Origin"] = origin
+        # Get the origin from the request and clean it
+        origin = request.headers.get("origin", "").strip()
+        if origin in allowed_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin.strip()
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Access-Control-Expose-Headers"] = "*"
         
