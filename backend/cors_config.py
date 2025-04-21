@@ -10,19 +10,12 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
     # Define all headers we want to allow
     allowed_headers = [
         "Content-Type",
-        "content-type",
-        "Authorization",
-        "authorization",
         "Accept",
-        "accept",
+        "Authorization",
         "Origin",
-        "origin",
         "X-Requested-With",
-        "x-requested-with",
         "Access-Control-Request-Method",
-        "access-control-request-method",
-        "Access-Control-Request-Headers",
-        "access-control-request-headers"
+        "Access-Control-Request-Headers"
     ]
 
     # Ensure the Vercel frontend origin is in the allowed origins
@@ -34,7 +27,7 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
-        allow_headers=allowed_headers,
+        allow_headers=["*"],
         expose_headers=["*"],
         max_age=3600,
     )
@@ -49,18 +42,21 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
             if origin in allowed_origins:
                 response.headers["Access-Control-Allow-Origin"] = origin
                 response.headers["Access-Control-Allow-Methods"] = "*"
-                response.headers["Access-Control-Allow-Headers"] = ", ".join(allowed_headers)
+                response.headers["Access-Control-Allow-Headers"] = "*"
                 response.headers["Access-Control-Allow-Credentials"] = "true"
                 response.headers["Access-Control-Max-Age"] = "3600"
             return response
             
         response = await call_next(request)
         
-        # Get the origin from the request and clean it
+        # Get the origin from the request
         origin = request.headers.get("origin", "").strip()
         if origin in allowed_origins:
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Access-Control-Expose-Headers"] = "*"
+            
+            # Add Vary header to handle caching correctly
+            response.headers["Vary"] = "Origin"
         
         return response 
