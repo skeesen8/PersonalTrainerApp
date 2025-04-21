@@ -1,8 +1,8 @@
-import axios from 'axios';
+import axios, { AxiosRequestHeaders, AxiosHeaders } from 'axios';
 
 const baseURL = process.env.REACT_APP_API_URL || 'https://scintillating-harmony-production.up.railway.app';
 
-// Debug utility functions
+// Enhanced debug utility functions
 const debugLog = {
     request: (config: any) => {
         console.group('🌐 API Request');
@@ -12,6 +12,12 @@ const debugLog = {
         if (config.data) {
             console.log('Data:', config.data);
         }
+        // Log CORS-specific information
+        console.group('CORS Details');
+        console.log('Origin:', window.location.origin);
+        console.log('Credentials Mode:', config.withCredentials ? 'include' : 'same-origin');
+        console.log('Content-Type:', config.headers?.['content-type']);
+        console.groupEnd();
         console.groupEnd();
     },
     response: (response: any) => {
@@ -19,6 +25,13 @@ const debugLog = {
         console.log('Status:', response.status);
         console.log('Headers:', JSON.stringify(response.headers, null, 2));
         console.log('Data:', response.data);
+        // Log CORS-related response headers
+        console.group('CORS Headers');
+        console.log('Access-Control-Allow-Origin:', response.headers['access-control-allow-origin']);
+        console.log('Access-Control-Allow-Credentials:', response.headers['access-control-allow-credentials']);
+        console.log('Access-Control-Allow-Headers:', response.headers['access-control-allow-headers']);
+        console.log('Access-Control-Allow-Methods:', response.headers['access-control-allow-methods']);
+        console.groupEnd();
         console.groupEnd();
     },
     error: (error: any) => {
@@ -27,6 +40,15 @@ const debugLog = {
             console.log('Status:', error.response.status);
             console.log('Headers:', JSON.stringify(error.response.headers, null, 2));
             console.log('Data:', error.response.data);
+            // Log CORS-related error information
+            if (error.response.status === 0) {
+                console.group('🚫 CORS Error Details');
+                console.log('Origin:', window.location.origin);
+                console.log('Target URL:', error.config.url);
+                console.log('Request Headers:', JSON.stringify(error.config.headers, null, 2));
+                console.log('Error Message:', error.message);
+                console.groupEnd();
+            }
         } else if (error.request) {
             console.log('No response received');
             console.log('Request:', error.request);
@@ -47,26 +69,24 @@ const axiosInstance = axios.create({
     }
 });
 
-// Request interceptor
+// Request interceptor with enhanced debugging
 axiosInstance.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
         
-        // Reset headers to ensure clean state
-        config.headers.clear?.();
-        
-        // Set basic headers
-        config.headers.set('accept', 'application/json');
-        config.headers.set('content-type', 
-            config.url?.includes('/token') 
-                ? 'application/x-www-form-urlencoded'
-                : 'application/json'
-        );
+        // Create new headers instance
+        const headers = new AxiosHeaders();
+        headers.set('accept', 'application/json');
+        headers.set('content-type', config.url?.includes('/token') 
+            ? 'application/x-www-form-urlencoded'
+            : 'application/json');
 
         // Add authorization header if token exists and not a token request
         if (token && !config.url?.includes('/token')) {
-            config.headers.set('authorization', `Bearer ${token}`);
+            headers.set('authorization', `Bearer ${token}`);
         }
+        
+        config.headers = headers;
         
         // Debug logging
         debugLog.request(config);
@@ -79,7 +99,7 @@ axiosInstance.interceptors.request.use(
     }
 );
 
-// Response interceptor
+// Response interceptor with enhanced debugging
 axiosInstance.interceptors.response.use(
     (response) => {
         debugLog.response(response);

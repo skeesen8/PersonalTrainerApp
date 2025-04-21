@@ -5,13 +5,17 @@ from typing import List
 import logging
 import json
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
+# Configure logging with more detail
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s [%(levelname)s] CORS: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 logger = logging.getLogger("cors_debug")
 
 def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
     """
-    Configure CORS for the FastAPI application with debug logging
+    Configure CORS for the FastAPI application with detailed debugging
     """
     # Define all headers we want to allow - case sensitive!
     allowed_headers = [
@@ -22,32 +26,46 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         "dnt",
         "origin",
         "user-agent",
-        "x-requested-with",
-        "Access-Control-Allow-Headers",
-        "Access-Control-Allow-Origin",
-        "Access-Control-Request-Method"
+        "x-requested-with"
     ]
 
     # Ensure the Vercel frontend origin is in the allowed origins
     if "https://personal-trainer-app-topaz.vercel.app" not in allowed_origins:
         allowed_origins.append("https://personal-trainer-app-topaz.vercel.app")
 
+    def log_cors_debug(prefix: str, data: dict) -> None:
+        """Helper to log CORS-related data in a consistent format"""
+        logger.debug(f"\n{'='*20} {prefix} {'='*20}")
+        for key, value in data.items():
+            logger.debug(f"{key}: {value}")
+        logger.debug('='*50)
+
     @app.middleware("http")
     async def cors_debug_middleware(request: Request, call_next):
-        # Log incoming request details
-        logger.debug(f"\n{'='*50}\nIncoming Request Debug:")
-        logger.debug(f"Method: {request.method}")
-        logger.debug(f"URL: {request.url}")
-        logger.debug(f"Headers:\n{json.dumps(dict(request.headers), indent=2)}")
+        # Log detailed request information
+        request_headers = dict(request.headers)
+        log_cors_debug("Incoming Request", {
+            "Method": request.method,
+            "URL": str(request.url),
+            "Origin": request_headers.get("origin", "No Origin"),
+            "Access-Control-Request-Method": request_headers.get("access-control-request-method", "None"),
+            "Access-Control-Request-Headers": request_headers.get("access-control-request-headers", "None"),
+            "All Headers": json.dumps(request_headers, indent=2)
+        })
         
-        origin = request.headers.get("origin", "").strip()
-        
-        # Handle preflight requests
+        # Handle preflight requests with detailed logging
         if request.method == "OPTIONS":
-            logger.debug("\nHandling Preflight Request:")
-            logger.debug(f"Origin: {origin}")
-            logger.debug(f"Is origin allowed? {origin in allowed_origins}")
+            origin = request.headers.get("origin", "").strip()
+            requested_method = request.headers.get("access-control-request-method")
+            requested_headers = request.headers.get("access-control-request-headers")
             
+            log_cors_debug("Preflight Details", {
+                "Origin Allowed": origin in allowed_origins,
+                "Requested Method": requested_method,
+                "Requested Headers": requested_headers,
+                "Allowed Headers": ", ".join(allowed_headers)
+            })
+
             if origin in allowed_origins:
                 headers = {
                     "Access-Control-Allow-Origin": origin,
@@ -55,37 +73,42 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
                     "Access-Control-Allow-Headers": ", ".join(allowed_headers),
                     "Access-Control-Allow-Credentials": "true",
                     "Access-Control-Max-Age": "3600",
-                    "Access-Control-Expose-Headers": "*",
                     "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
                 }
                 
-                # Log the actual headers being sent
-                logger.debug(f"Preflight Response Headers:\n{json.dumps(headers, indent=2)}")
+                log_cors_debug("Preflight Response", {
+                    "Status": "204 No Content",
+                    "Headers": json.dumps(headers, indent=2)
+                })
                 return Response(status_code=204, headers=headers)
             
+            log_cors_debug("Preflight Rejected", {
+                "Reason": "Origin not allowed",
+                "Requested Origin": origin,
+                "Allowed Origins": allowed_origins
+            })
             return Response(status_code=204)
         
+        # Handle actual request
         response = await call_next(request)
         
         # Add CORS headers to all responses
+        origin = request.headers.get("origin", "").strip()
         if origin in allowed_origins:
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Access-Control-Allow-Headers"] = ", ".join(allowed_headers)
-            response.headers["Access-Control-Expose-Headers"] = "*"
             response.headers["Vary"] = "Origin"
         
         # Log response details
-        logger.debug("\nResponse Debug:")
-        logger.debug(f"Status Code: {response.status_code}")
-        logger.debug(f"Headers:\n{json.dumps(dict(response.headers), indent=2)}")
-        logger.debug(f"{'='*50}\n")
+        log_cors_debug("Response", {
+            "Status": response.status_code,
+            "Headers": json.dumps(dict(response.headers), indent=2)
+        })
         
         return response
 
-    # Remove the CORSMiddleware since we're handling everything in our custom middleware
-    # This prevents potential conflicts between the two CORS handlers
-    app.middleware_stack = None  # Clear existing middleware
+    # Add the CORS middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,
