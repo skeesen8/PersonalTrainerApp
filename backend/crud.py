@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 import models, schemas
 from datetime import datetime
 import json
@@ -14,10 +14,16 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 def get_user(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.id == user_id).first()
+    """Get a user by ID with relationships loaded"""
+    return db.query(models.User).options(
+        joinedload(models.User.assigned_users)
+    ).filter(models.User.id == user_id).first()
 
 def get_user_by_email(db: Session, email: str):
-    return db.query(models.User).filter(models.User.email == email).first()
+    """Get a user by email with relationships loaded"""
+    return db.query(models.User).options(
+        joinedload(models.User.assigned_users)
+    ).filter(models.User.email == email).first()
 
 def get_users(db: Session, skip: int = 0, limit: int = 100, admin_id: int = None):
     """Get users with optional filtering by admin assignment"""
@@ -104,22 +110,16 @@ def get_user_meal_plans(db: Session, user_id: int, skip: int = 0, limit: int = 1
     return db.query(models.MealPlan).filter(models.MealPlan.user_id == user_id).offset(skip).limit(limit).all()
 
 def create_meal_plan(db: Session, meal_plan: schemas.MealPlanCreate):
+    """Create a new meal plan"""
     try:
-        db_meal_plan = models.MealPlan(
-            title=meal_plan.title,
-            description=meal_plan.description,
-            meals=json.dumps([meal.dict() for meal in meal_plan.meals]),
-            user_id=meal_plan.assigned_user_id,
-            scheduled_date=meal_plan.date
-        )
+        db_meal_plan = models.MealPlan(**meal_plan.dict())
         db.add(db_meal_plan)
         db.commit()
         db.refresh(db_meal_plan)
         return db_meal_plan
     except Exception as e:
         db.rollback()
-        print(f"Error creating meal plan: {str(e)}")
-        raise
+        raise e
 
 def authenticate_user(db: Session, email: str, password: str):
     user = get_user_by_email(db, email)

@@ -73,29 +73,55 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
     e.preventDefault();
     setError('');
     try {
+      // Validate required fields
+      if (!formData.title || !formData.description || !formData.date || !formData.assigned_user_id) {
+        setError('Please fill in all required fields');
+        return;
+      }
+
+      // Validate meals
+      if (!formData.meals.length) {
+        setError('Please add at least one meal');
+        return;
+      }
+
+      // Validate meal data
+      for (const meal of formData.meals) {
+        if (!meal.name || !meal.time || !meal.calories || !meal.protein || !meal.carbs || !meal.fats) {
+          setError('Please fill in all meal details');
+          return;
+        }
+      }
+
       // Format data to match backend schema
       const formattedData = {
-        ...formData,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
         date: new Date(formData.date).toISOString(),
         assigned_user_id: Number(formData.assigned_user_id),
         meals: formData.meals.map(meal => ({
-          name: meal.name,
-          time: meal.time,
+          name: meal.name.trim(),
+          time: meal.time.trim(),
           calories: Number(meal.calories),
           protein: Number(meal.protein),
           carbs: Number(meal.carbs),
           fats: Number(meal.fats),
-          ingredients: meal.ingredients
+          ingredients: meal.ingredients.trim()
         }))
       };
 
-      await api.post('/meal-plans/', formattedData);
+      console.log('Submitting meal plan:', formattedData);
+      
+      const response = await api.post('/meal-plans/', formattedData);
+      console.log('Meal plan created:', response.data);
+      
       onMealPlanCreated();
       setFormData(initialFormData);
       onClose();
     } catch (err: any) {
-      const errorDetail = err.response?.data?.detail;
-      setError(Array.isArray(errorDetail) ? errorDetail[0].msg : (errorDetail || 'Failed to create meal plan'));
+      console.error('Error creating meal plan:', err);
+      const errorMessage = err.response?.data?.detail || 'Failed to create meal plan';
+      setError(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
     }
   };
 
