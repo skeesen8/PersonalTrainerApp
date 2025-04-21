@@ -7,7 +7,8 @@ const axiosInstance = axios.create({
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Access-Control-Allow-Origin': 'https://personal-trainer-app-topaz.vercel.app'
     },
 });
 
@@ -17,6 +18,9 @@ axiosInstance.interceptors.request.use(
         // Get the token from localStorage
         const token = localStorage.getItem('token');
         
+        // Ensure headers object exists
+        config.headers = config.headers || {};
+        
         // For token requests, ensure correct content type and remove Authorization header
         if (config.url?.includes('/token')) {
             config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -24,16 +28,17 @@ axiosInstance.interceptors.request.use(
         } else if (token) {
             // For all other requests, add the Authorization header if we have a token
             config.headers['Authorization'] = `Bearer ${token}`;
+            // Ensure content type is set for non-form requests
+            config.headers['Content-Type'] = 'application/json';
         }
         
+        // Add CORS headers
+        config.headers['Access-Control-Allow-Origin'] = 'https://personal-trainer-app-topaz.vercel.app';
+        config.headers['Access-Control-Allow-Methods'] = 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS';
+        config.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept';
+        
         // Log request details for debugging
-        console.log('Request config:', {
-            url: config.url,
-            method: config.method,
-            headers: config.headers,
-            data: config.data,
-            withCredentials: config.withCredentials
-        });
+        console.log('Request config:', config);
         
         return config;
     },
@@ -54,9 +59,15 @@ axiosInstance.interceptors.response.use(
             console.error('Response error status:', error.response.status);
             console.error('Response error headers:', error.response.headers);
             
+            // Handle 401 Unauthorized
             if (error.response.status === 401) {
                 localStorage.removeItem('token');
                 window.location.href = '/login';
+            }
+            
+            // Handle CORS errors
+            if (error.response.status === 0 && error.message.includes('CORS')) {
+                console.error('CORS Error:', error);
             }
         } else if (error.request) {
             console.error('No response received:', error.request);
