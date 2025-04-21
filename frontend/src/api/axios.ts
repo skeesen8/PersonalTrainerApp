@@ -8,7 +8,7 @@ const axiosInstance = axios.create({
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
-    },
+    }
 });
 
 // Request interceptor
@@ -27,12 +27,15 @@ axiosInstance.interceptors.request.use(
         } else if (token) {
             // For all other requests, add the Authorization header if we have a token
             config.headers['Authorization'] = `Bearer ${token}`;
-            // Ensure content type is set for non-form requests
-            config.headers['Content-Type'] = 'application/json';
         }
         
         // Log request details for debugging
-        console.log('Request config:', config);
+        console.log('Request config:', {
+            url: config.url,
+            method: config.method,
+            headers: config.headers,
+            withCredentials: config.withCredentials
+        });
         
         return config;
     },
@@ -57,11 +60,6 @@ axiosInstance.interceptors.response.use(
             if (error.response.status === 401) {
                 localStorage.removeItem('token');
                 window.location.href = '/login';
-            }
-            
-            // Handle CORS errors
-            if (error.response.status === 0 && error.message.includes('CORS')) {
-                console.error('CORS Error:', error);
             }
         } else if (error.request) {
             console.error('No response received:', error.request);
