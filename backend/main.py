@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm import Session
 from typing import List
 import models, schemas, crud
@@ -14,6 +15,7 @@ from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 import json
 from cors_config import setup_cors
+import traceback
 
 # Load environment variables
 load_dotenv()
@@ -117,44 +119,106 @@ async def startup_event():
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    # Log the full error
+    logging.error(f"Unhandled exception: {str(exc)}")
+    logging.error(traceback.format_exc())
+    
+    # Get origin from request
+    origin = request.headers.get("origin")
+    
+    # Create response with CORS headers
+    response = JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "Internal server error occurred"},
+    )
+    
+    if origin and origin in allowed_origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+    
+    return response
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    # Log the error
+    logging.error(f"HTTP exception: {exc.detail}")
+    
+    # Get origin from request
+    origin = request.headers.get("origin")
+    
+    # Create response with CORS headers
+    response = JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
+    
+    if origin and origin in allowed_origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        
+    # Add any additional headers from the original exception
+    if exc.headers:
+        response.headers.update(exc.headers)
+    
+    return response
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handle validation errors and maintain CORS headers"""
+    logger.error(f"Validation error: {str(exc)}")
+    response = JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": exc.errors()},
+    )
+    origin = request.headers.get("origin")
+    if origin in allowed_origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
+
 @app.post("/token")
 async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
-    """
-    OAuth2 compatible token login, get an access token for future requests
-    """
-    logger.info(f"Login attempt for user: {form_data.username}")
     try:
-        with get_db() as db:
-            user = crud.authenticate_user(db, form_data.username, form_data.password)
-            if user is None:
-                logger.warning(f"Authentication failed for user: {form_data.username}")
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Incorrect username or password",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-            
-            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-            access_token = create_access_token(
-                data={"sub": user.email}, expires_delta=access_token_expires
-            )
-            logger.info(f"Login successful for user: {form_data.username}")
-            
-            # Create response with proper headers
-            response = JSONResponse(
-                content={"access_token": access_token, "token_type": "bearer"}
+        logging.info(f"Login attempt for user: {form_data.username}")
+        
+        user = authenticate_user(form_data.username, form_data.password)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
             )
             
-            # Add CORS headers
-            origin = request.headers.get("origin")
-            if origin in allowed_origins:
-                response.headers["Access-Control-Allow-Origin"] = origin
-                response.headers["Access-Control-Allow-Credentials"] = "true"
-            
-            return response
-            
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.email}, expires_delta=access_token_expires
+        )
+        
+        # Get origin from request
+        origin = request.headers.get("origin")
+        
+        # Create response with token
+        response = JSONResponse(
+            content={"access_token": access_token, "token_type": "bearer"}
+        )
+        
+        # Add CORS headers if origin is allowed
+        if origin and origin in allowed_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+        
+        logging.info(f"Login successful for user: {form_data.username}")
+        return response
+        
+    except HTTPException as he:
+        # Re-raise HTTP exceptions to be handled by the exception handler
+        raise
     except Exception as e:
-        logger.error(f"Login error: {str(e)}")
+        # Log the error and re-raise as HTTP exception
+        logging.error(f"Login error for user {form_data.username}: {str(e)}")
+        logging.error(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred during login"
