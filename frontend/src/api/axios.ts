@@ -24,13 +24,14 @@ axiosInstance.interceptors.request.use(
         if (config.url?.includes('/token')) {
             config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
             delete config.headers['Authorization'];
+            delete config.headers['authorization']; // Remove lowercase version too
         } else if (token) {
             // For all other requests, add the Authorization header if we have a token
             config.headers['Authorization'] = `Bearer ${token}`;
         }
         
         // Log request details for debugging
-        console.log('Request config:', {
+        console.log('Request details:', {
             url: config.url,
             method: config.method,
             headers: config.headers,
@@ -52,9 +53,11 @@ axiosInstance.interceptors.response.use(
     },
     (error) => {
         if (error.response) {
-            console.error('Response error data:', error.response.data);
-            console.error('Response error status:', error.response.status);
-            console.error('Response error headers:', error.response.headers);
+            console.error('Response error:', {
+                data: error.response.data,
+                status: error.response.status,
+                headers: error.response.headers
+            });
             
             // Handle 401 Unauthorized
             if (error.response.status === 401) {
