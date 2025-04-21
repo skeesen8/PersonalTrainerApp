@@ -43,8 +43,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchUserData = async () => {
         if (!token) return;
         try {
-            // Set token in axios default headers
-            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             const response = await api.get('/users/me');
             setUser(response.data);
             localStorage.setItem('user', JSON.stringify(response.data));
@@ -60,23 +58,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             formData.append('username', username);
             formData.append('password', password);
 
+            // Clear any existing Authorization header before login
+            delete api.defaults.headers.common['Authorization'];
+            
             const response = await api.post('/token', formData.toString());
             
             if (response.data.access_token) {
                 const newToken = response.data.access_token;
-                // Set token in axios default headers first
-                api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
                 
-                // Then fetch user data
+                // Store in localStorage first
+                localStorage.setItem('token', newToken);
+                
+                // Then fetch user data using the new token
                 const userResponse = await api.get('/users/me');
                 const userData = userResponse.data;
                 
-                // Update all state at once
+                // Update state and localStorage
                 setToken(newToken);
                 setUser(userData);
-                
-                // Store in localStorage
-                localStorage.setItem('token', newToken);
                 localStorage.setItem('user', JSON.stringify(userData));
                 
                 return userData;
@@ -89,13 +88,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    // Set up initial axios headers when component mounts
+    // Set up initial axios headers when component mounts or token changes
     useEffect(() => {
         if (token) {
             api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             fetchUserData();
+        } else {
+            delete api.defaults.headers.common['Authorization'];
         }
-    }, []);
+    }, [token]);
 
     return (
         <AuthContext.Provider value={{ token, user, setToken, isAuthenticated, isAdmin, logout, login }}>

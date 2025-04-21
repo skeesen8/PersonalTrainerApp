@@ -12,6 +12,7 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         "Content-Type",
         "Accept",
         "Authorization",
+        "authorization",  # Add lowercase version
         "Origin",
         "X-Requested-With",
         "Access-Control-Request-Method",
@@ -27,7 +28,7 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
-        allow_headers=["*"],
+        allow_headers=allowed_headers,  # Use our explicit headers list
         expose_headers=["*"],
         max_age=3600,
     )
@@ -42,9 +43,10 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
             if origin in allowed_origins:
                 response.headers["Access-Control-Allow-Origin"] = origin
                 response.headers["Access-Control-Allow-Methods"] = "*"
-                response.headers["Access-Control-Allow-Headers"] = "*"
+                response.headers["Access-Control-Allow-Headers"] = ", ".join(allowed_headers)
                 response.headers["Access-Control-Allow-Credentials"] = "true"
                 response.headers["Access-Control-Max-Age"] = "3600"
+                response.headers["Vary"] = "Origin"
             return response
             
         response = await call_next(request)
@@ -55,8 +57,6 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Access-Control-Expose-Headers"] = "*"
-            
-            # Add Vary header to handle caching correctly
             response.headers["Vary"] = "Origin"
         
         return response 
