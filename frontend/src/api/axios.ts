@@ -8,7 +8,7 @@ const debugLog = {
         console.group('🌐 API Request');
         console.log('URL:', `${config.baseURL}${config.url}`);
         console.log('Method:', config.method?.toUpperCase());
-        console.log('Headers:', config.headers);
+        console.log('Headers:', JSON.stringify(config.headers, null, 2));
         if (config.data) {
             console.log('Data:', config.data);
         }
@@ -17,7 +17,7 @@ const debugLog = {
     response: (response: any) => {
         console.group('✅ API Response');
         console.log('Status:', response.status);
-        console.log('Headers:', response.headers);
+        console.log('Headers:', JSON.stringify(response.headers, null, 2));
         console.log('Data:', response.data);
         console.groupEnd();
     },
@@ -25,7 +25,7 @@ const debugLog = {
         console.group('❌ API Error');
         if (error.response) {
             console.log('Status:', error.response.status);
-            console.log('Headers:', error.response.headers);
+            console.log('Headers:', JSON.stringify(error.response.headers, null, 2));
             console.log('Data:', error.response.data);
         } else if (error.request) {
             console.log('No response received');
@@ -42,23 +42,22 @@ const axiosInstance = axios.create({
     baseURL,
     withCredentials: true,
     headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
     }
 });
 
 // Request interceptor
 axiosInstance.interceptors.request.use(
     (config) => {
-        // Get the token from localStorage
         const token = localStorage.getItem('token');
         
         // Ensure headers object exists
         config.headers = config.headers || {};
         
-        // For token requests, ensure correct content type and remove Authorization header
         if (config.url?.includes('/token')) {
             config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+            // Remove Authorization header for token requests
             delete config.headers['Authorization'];
         } else if (token) {
             // For all other requests, add the Authorization header if we have a token

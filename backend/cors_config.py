@@ -40,34 +40,38 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         logger.debug(f"URL: {request.url}")
         logger.debug(f"Headers:\n{json.dumps(dict(request.headers), indent=2)}")
         
-        # Handle preflight requests with detailed logging
+        origin = request.headers.get("origin", "").strip()
+        
+        # Handle preflight requests
         if request.method == "OPTIONS":
             logger.debug("\nHandling Preflight Request:")
-            origin = request.headers.get("origin", "").strip()
             logger.debug(f"Origin: {origin}")
             logger.debug(f"Is origin allowed? {origin in allowed_origins}")
             
-            headers = {
-                "Access-Control-Allow-Origin": origin if origin in allowed_origins else "",
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-                "Access-Control-Allow-Headers": ", ".join(allowed_headers),
-                "Access-Control-Allow-Credentials": "true",
-                "Access-Control-Max-Age": "3600",
-                "Vary": "Origin"
-            }
+            if origin in allowed_origins:
+                headers = {
+                    "Access-Control-Allow-Origin": origin,
+                    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+                    "Access-Control-Allow-Headers": ", ".join(allowed_headers),
+                    "Access-Control-Allow-Credentials": "true",
+                    "Access-Control-Max-Age": "3600",
+                    "Access-Control-Expose-Headers": "*",
+                    "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
+                }
+                
+                logger.debug(f"Response Headers:\n{json.dumps(headers, indent=2)}")
+                return Response(status_code=204, headers=headers)
             
-            logger.debug(f"Response Headers:\n{json.dumps(headers, indent=2)}")
-            return Response(status_code=200, headers=headers)
+            return Response(status_code=204)
         
-        # Process the regular request
         response = await call_next(request)
         
-        # Add CORS headers to response
-        origin = request.headers.get("origin", "").strip()
+        # Add CORS headers to all responses
         if origin in allowed_origins:
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Access-Control-Allow-Headers"] = ", ".join(allowed_headers)
+            response.headers["Access-Control-Expose-Headers"] = "*"
             response.headers["Vary"] = "Origin"
         
         # Log response details
