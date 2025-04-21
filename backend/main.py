@@ -12,6 +12,7 @@ import logging
 import os
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
+import json
 
 # Load environment variables
 load_dotenv()
@@ -234,33 +235,60 @@ def create_meal_plan(
 ):
     """Create a new meal plan"""
     with get_db() as db:
-        # Refresh current user in this session
-        current_user_fresh = db.query(models.User).filter(models.User.id == current_user.id).first()
-        if not current_user_fresh.is_admin:
-            raise HTTPException(status_code=403, detail="Not authorized to create meal plans")
-        
-        # Get the assigned user
-        assigned_user = crud.get_user(db, meal_plan.assigned_user_id)
-        if not assigned_user:
-            logger.warning(f"Assigned user {meal_plan.assigned_user_id} not found")
-            raise HTTPException(status_code=404, detail="Assigned user not found")
-        
-        # Check if the user is already assigned to the admin
-        is_assigned = db.query(models.user_admin_association).filter(
-            models.user_admin_association.c.admin_id == current_user_fresh.id,
-            models.user_admin_association.c.user_id == assigned_user.id
-        ).first() is not None
-
-        # If not assigned, create the admin-user relationship
-        if not is_assigned:
-            logger.info(f"Creating admin-user relationship: admin={current_user_fresh.id}, user={assigned_user.id}")
-            crud.assign_user_to_admin(db, admin_id=current_user_fresh.id, user_id=assigned_user.id)
-        
-        # Now create the meal plan
         try:
-            return crud.create_meal_plan(db=db, meal_plan=meal_plan)
+            # Refresh current user in this session
+            current_user_fresh = db.query(models.User).filter(models.User.id == current_user.id).first()
+            logger.info(f"Admin user {current_user_fresh.id} attempting to create meal plan for user {meal_plan.assigned_user_id}")
+            
+            if not current_user_fresh.is_admin:
+                logger.warning(f"Non-admin user {current_user_fresh.id} attempted to create meal plan")
+                raise HTTPException(status_code=403, detail="Not authorized to create meal plans")
+            
+            # Get the assigned user with direct query
+            assigned_user = db.query(models.User).filter(models.User.id == meal_plan.assigned_user_id).first()
+            logger.info(f"Querying for user with ID {meal_plan.assigned_user_id}")
+            
+            if not assigned_user:
+                logger.error(f"User with ID {meal_plan.assigned_user_id} not found in database")
+                raise HTTPException(status_code=404, detail="Assigned user not found")
+            
+            logger.info(f"Found assigned user: {assigned_user.email}")
+            
+            # Check the admin-user relationship
+            relationship = db.query(models.admin_user_association).filter(
+                models.admin_user_association.c.admin_id == current_user_fresh.id,
+                models.admin_user_association.c.user_id == assigned_user.id
+            ).first()
+            
+            if not relationship:
+                logger.info(f"Creating new admin-user relationship between {current_user_fresh.id} and {assigned_user.id}")
+                db.execute(
+                    models.admin_user_association.insert().values(
+                        admin_id=current_user_fresh.id,
+                        user_id=assigned_user.id
+                    )
+                )
+                db.commit()
+            
+            # Create the meal plan - note the mapping from assigned_user_id to user_id
+            logger.info(f"Creating meal plan with title: {meal_plan.title}")
+            db_meal_plan = models.MealPlan(
+                title=meal_plan.title,
+                description=meal_plan.description,
+                meals=json.dumps([meal.dict() for meal in meal_plan.meals]),
+                user_id=meal_plan.assigned_user_id,  # Map assigned_user_id to user_id
+                scheduled_date=meal_plan.date
+            )
+            db.add(db_meal_plan)
+            db.commit()
+            db.refresh(db_meal_plan)
+            
+            logger.info(f"Successfully created meal plan with ID: {db_meal_plan.id}")
+            return db_meal_plan
+            
         except Exception as e:
-            logger.error(f"Error creating meal plan: {str(e)}")
+            logger.error(f"Error in create_meal_plan: {str(e)}")
+            db.rollback()
             raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/workout-plans/user", response_model=List[schemas.WorkoutPlan])
