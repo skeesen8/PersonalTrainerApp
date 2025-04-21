@@ -21,9 +21,20 @@ def get_user(db: Session, user_id: int):
 
 def get_user_by_email(db: Session, email: str):
     """Get a user by email with relationships loaded"""
-    return db.query(models.User).options(
-        joinedload(models.User.assigned_users)
-    ).filter(models.User.email == email).first()
+    try:
+        user = db.query(models.User).options(
+            joinedload(models.User.assigned_users)
+        ).filter(models.User.email == email).first()
+        
+        if user:
+            print(f"Found user: id={user.id}, email={user.email}, is_admin={user.is_admin}")
+        else:
+            print(f"No user found with email: {email}")
+        
+        return user
+    except Exception as e:
+        print(f"Error in get_user_by_email: {str(e)}")
+        raise
 
 def get_users(db: Session, skip: int = 0, limit: int = 100, admin_id: int = None):
     """Get users with optional filtering by admin assignment"""
