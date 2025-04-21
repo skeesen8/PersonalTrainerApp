@@ -42,8 +42,8 @@ const axiosInstance = axios.create({
     baseURL,
     withCredentials: true,
     headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'accept': 'application/json',
+        'content-type': 'application/json'
     }
 });
 
@@ -52,16 +52,20 @@ axiosInstance.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
         
-        // Ensure headers object exists
-        config.headers = config.headers || {};
+        // Reset headers to ensure clean state
+        config.headers.clear?.();
         
-        if (config.url?.includes('/token')) {
-            config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-            // Remove Authorization header for token requests
-            delete config.headers['Authorization'];
-        } else if (token) {
-            // For all other requests, add the Authorization header if we have a token
-            config.headers['Authorization'] = `Bearer ${token}`;
+        // Set basic headers
+        config.headers.set('accept', 'application/json');
+        config.headers.set('content-type', 
+            config.url?.includes('/token') 
+                ? 'application/x-www-form-urlencoded'
+                : 'application/json'
+        );
+
+        // Add authorization header if token exists and not a token request
+        if (token && !config.url?.includes('/token')) {
+            config.headers.set('authorization', `Bearer ${token}`);
         }
         
         // Debug logging
