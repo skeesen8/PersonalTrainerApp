@@ -32,20 +32,16 @@ app = FastAPI(
 # Get allowed origins from environment or use defaults
 allowed_origins = [
     "http://localhost:3000",
-    "https://personal-trainer-app-topaz.vercel.app",
-    "https://scintillating-harmony-production.up.railway.app",
-    "http://scintillating-harmony-production.up.railway.app"
+    "https://personal-trainer-app-topaz.vercel.app"
 ]
 
-# Add CORS middleware with more permissive settings for preflight requests
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=3600,
+    allow_headers=["*"]
 )
 
 logger.info("Starting application with configuration:")
@@ -57,17 +53,6 @@ async def log_requests(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url}")
     logger.info(f"Request headers: {dict(request.headers)}")
     logger.info(f"Request origin: {origin}")
-    
-    # Handle preflight requests
-    if request.method == "OPTIONS":
-        response = Response(status_code=200)
-        if origin in allowed_origins:
-            response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Methods"] = "*"
-            response.headers["Access-Control-Allow-Headers"] = "*"
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Max-Age"] = "3600"
-        return response
     
     response = await call_next(request)
     
@@ -126,13 +111,9 @@ async def startup_event():
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 @app.post("/token")
-async def login_for_access_token(
-    request: Request,
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     logger.info(f"Login attempt for user: {form_data.username}")
-    try:
+    with get_db() as db:
         user = crud.authenticate_user(db, form_data.username, form_data.password)
         if user is None:
             logger.warning(f"Authentication failed for user: {form_data.username}")
@@ -146,26 +127,7 @@ async def login_for_access_token(
             data={"sub": user.email}, expires_delta=access_token_expires
         )
         logger.info(f"Login successful for user: {form_data.username}")
-        
-        # Create response with proper headers
-        response = JSONResponse(
-            content={"access_token": access_token, "token_type": "bearer"}
-        )
-        
-        # Add CORS headers
-        origin = request.headers.get("origin")
-        if origin in allowed_origins:
-            response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-        
-        return response
-        
-    except Exception as e:
-        logger.error(f"Login error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred during login"
-        )
+        return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/users/me", response_model=schemas.User)
 def read_users_me(current_user: models.User = Depends(get_current_user)):
