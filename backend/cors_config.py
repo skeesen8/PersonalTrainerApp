@@ -19,14 +19,16 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
     """
     # Define all headers we want to allow - case sensitive!
     allowed_headers = [
-        "accept",
-        "accept-encoding",
-        "authorization",
-        "content-type",
-        "dnt",
-        "origin",
-        "user-agent",
-        "x-requested-with"
+        "Accept",
+        "Accept-Encoding",
+        "Authorization",
+        "Content-Type",
+        "DNT",
+        "Origin",
+        "User-Agent",
+        "X-Requested-With",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers"
     ]
 
     # Ensure the Vercel frontend origin is in the allowed origins
@@ -71,9 +73,9 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
                     "Access-Control-Allow-Origin": origin,
                     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
                     "Access-Control-Allow-Headers": ", ".join(allowed_headers),
-                    "Access-Control-Allow-Credentials": "true",
+                    "Access-Control-Allow-Credentials": "false",
                     "Access-Control-Max-Age": "3600",
-                    "Vary": "Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
+                    "Vary": "Origin"
                 }
                 
                 log_cors_debug("Preflight Response", {
@@ -96,7 +98,7 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         origin = request.headers.get("origin", "").strip()
         if origin in allowed_origins:
             response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Credentials"] = "false"
             response.headers["Access-Control-Allow-Headers"] = ", ".join(allowed_headers)
             response.headers["Vary"] = "Origin"
         
@@ -112,8 +114,8 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "PUT", DELETE, "OPTIONS", "PATCH"],
         allow_headers=allowed_headers,
         expose_headers=["*"],
         max_age=3600,
