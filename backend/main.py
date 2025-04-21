@@ -447,9 +447,21 @@ def read_meal_plans(
         return meal_plans
 
 @app.get("/users/assigned", response_model=List[schemas.User])
-def read_assigned_users(current_user: models.User = Depends(get_current_user)):
+def read_assigned_users(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """Get all users assigned to the current admin"""
-    with get_db() as db:
+    try:
         if not current_user.is_admin:
             raise HTTPException(status_code=403, detail="Not authorized to view assigned users")
-        return crud.get_admin_users(db, admin_id=current_user.id) 
+        
+        users = crud.get_admin_users(db, admin_id=current_user.id)
+        if users is None:
+            return []
+        return users
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching assigned users: {str(e)}"
+        ) 
