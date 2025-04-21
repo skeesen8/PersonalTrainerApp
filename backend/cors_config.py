@@ -33,7 +33,7 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         CORSMiddleware,
         allow_origins=allowed_origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        allow_methods=["*"],
         allow_headers=allowed_headers,
         expose_headers=["*"],
         max_age=3600,
@@ -47,8 +47,8 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
             origin = request.headers.get("origin", "").strip()
             
             if origin in allowed_origins:
-                response.headers["Access-Control-Allow-Origin"] = origin.strip()
-                response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Methods"] = "*"
                 response.headers["Access-Control-Allow-Headers"] = ", ".join(allowed_headers)
                 response.headers["Access-Control-Allow-Credentials"] = "true"
                 response.headers["Access-Control-Max-Age"] = "3600"
@@ -59,7 +59,7 @@ def setup_cors(app: FastAPI, allowed_origins: List[str]) -> None:
         # Get the origin from the request and clean it
         origin = request.headers.get("origin", "").strip()
         if origin in allowed_origins:
-            response.headers["Access-Control-Allow-Origin"] = origin.strip()
+            response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
             response.headers["Access-Control-Expose-Headers"] = "*"
         
