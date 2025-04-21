@@ -73,9 +73,9 @@ class WorkoutPlan(WorkoutPlanBase):
 class MealPlanBase(BaseModel):
     title: str
     description: Optional[str] = None
-    date: datetime
+    scheduled_date: datetime
     meals: List[Meal]
-    assigned_user_id: int
+    user_id: int
 
 class MealPlanCreate(MealPlanBase):
     """Schema for creating a new meal plan"""
@@ -84,7 +84,7 @@ class MealPlanCreate(MealPlanBase):
             "example": {
                 "title": "Sample Meal Plan",
                 "description": "A balanced meal plan for the day",
-                "date": "2025-04-20T18:07:48.990Z",
+                "scheduled_date": "2025-04-20T18:07:48.990Z",
                 "meals": [
                     {
                         "name": "Breakfast",
@@ -96,7 +96,7 @@ class MealPlanCreate(MealPlanBase):
                         "ingredients": "Oatmeal, banana, almonds, protein powder"
                     }
                 ],
-                "assigned_user_id": 5
+                "user_id": 5
             }
         }
 
