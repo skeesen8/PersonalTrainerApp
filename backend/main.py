@@ -235,48 +235,80 @@ async def create_meal_plan(
     db: Session = Depends(get_db)
 ):
     try:
+        # Log the incoming request data
+        logger.info(f"Creating meal plan for user {meal_plan.assigned_user_id}")
+        
         # Refresh current user to ensure relationships are loaded
-        db.refresh(current_user)
+        try:
+            db.refresh(current_user)
+        except Exception as e:
+            logger.error(f"Error refreshing current user: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail="Database error while accessing user data"
+            )
         
         # If no assigned_user_id is provided, create meal plan for self
         if not meal_plan.assigned_user_id:
             meal_plan.assigned_user_id = current_user.id
+            logger.info(f"No assigned user provided, using current user: {current_user.id}")
         
         # Check if assigned user exists and current user has permission
         if meal_plan.assigned_user_id != current_user.id:
             if not current_user.is_admin:
+                logger.warning(f"Non-admin user {current_user.id} attempted to create meal plan for user {meal_plan.assigned_user_id}")
                 raise HTTPException(
                     status_code=403,
                     detail="Only admins can create meal plans for other users"
                 )
             
-            assigned_user = crud.get_user(db, meal_plan.assigned_user_id)
-            if not assigned_user:
+            try:
+                assigned_user = crud.get_user(db, meal_plan.assigned_user_id)
+                if not assigned_user:
+                    logger.warning(f"Assigned user {meal_plan.assigned_user_id} not found")
+                    raise HTTPException(
+                        status_code=404,
+                        detail="Assigned user not found"
+                    )
+                
+                if assigned_user not in current_user.assigned_users:
+                    logger.warning(f"User {current_user.id} attempted to create meal plan for non-assigned user {meal_plan.assigned_user_id}")
+                    raise HTTPException(
+                        status_code=403,
+                        detail="You can only create meal plans for your assigned users"
+                    )
+            except HTTPException as he:
+                raise he
+            except Exception as e:
+                logger.error(f"Error checking user relationships: {str(e)}")
                 raise HTTPException(
-                    status_code=404,
-                    detail="Assigned user not found"
-                )
-            
-            if assigned_user not in current_user.assigned_users:
-                raise HTTPException(
-                    status_code=403,
-                    detail="You can only create meal plans for your assigned users"
+                    status_code=500,
+                    detail="Error verifying user relationships"
                 )
         
         # Create the meal plan
-        db_meal_plan = crud.create_meal_plan(db, meal_plan)
-        
-        # Refresh to ensure all relationships are loaded
-        db.refresh(db_meal_plan)
-        return db_meal_plan
+        try:
+            db_meal_plan = crud.create_meal_plan(db, meal_plan)
+            logger.info(f"Successfully created meal plan with ID: {db_meal_plan.id}")
+            
+            # Refresh to ensure all relationships are loaded
+            db.refresh(db_meal_plan)
+            return db_meal_plan
+            
+        except Exception as e:
+            logger.error(f"Error in crud.create_meal_plan: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail="Error creating meal plan in database"
+            )
         
     except HTTPException as he:
         raise he
     except Exception as e:
-        logger.error(f"Error creating meal plan: {str(e)}")
+        logger.error(f"Unexpected error creating meal plan: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail="An error occurred while creating the meal plan"
+            detail="An unexpected error occurred while creating the meal plan"
         )
 
 @app.get("/workout-plans/user", response_model=List[schemas.WorkoutPlan])
