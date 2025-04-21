@@ -50,30 +50,17 @@ axiosInstance.interceptors.response.use(
     },
     (error) => {
         if (error.response) {
-            // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
             console.error('Response error data:', error.response.data);
             console.error('Response error status:', error.response.status);
             console.error('Response error headers:', error.response.headers);
             
-            // If we get a 401 Unauthorized error, redirect to login
             if (error.response.status === 401) {
                 localStorage.removeItem('token');
                 window.location.href = '/login';
             }
         } else if (error.request) {
-            // The request was made but no response was received
             console.error('No response received:', error.request);
-            // Log additional details about the request
-            console.error('Request details:', {
-                url: error.config?.url,
-                method: error.config?.method,
-                headers: error.config?.headers,
-                data: error.config?.data,
-                baseURL: error.config?.baseURL
-            });
         } else {
-            // Something happened in setting up the request
             console.error('Error setting up request:', error.message);
         }
         return Promise.reject(error);

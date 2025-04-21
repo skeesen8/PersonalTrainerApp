@@ -32,7 +32,8 @@ app = FastAPI(
 # Get allowed origins from environment or use defaults
 allowed_origins = [
     "http://localhost:3000",
-    "https://personal-trainer-app-topaz.vercel.app"
+    "https://personal-trainer-app-topaz.vercel.app",
+    "https://scintillating-harmony-production.up.railway.app"
 ]
 
 # Add CORS middleware
@@ -53,6 +54,17 @@ async def log_requests(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url}")
     logger.info(f"Request headers: {dict(request.headers)}")
     logger.info(f"Request origin: {origin}")
+    
+    # Handle preflight requests
+    if request.method == "OPTIONS":
+        if origin in allowed_origins:
+            response = Response(status_code=200)
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PUT, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            return response
+        return Response(status_code=400)
     
     response = await call_next(request)
     
