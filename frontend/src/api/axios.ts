@@ -17,9 +17,12 @@ axiosInstance.interceptors.request.use(
         // Get the token from localStorage
         const token = localStorage.getItem('token');
         
-        // For token requests, ensure correct content type
+        // For token requests, ensure correct content type and remove Authorization header
         if (config.url?.includes('/token')) {
             config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+            delete config.headers['Authorization'];
+            // Ensure credentials are included for token requests
+            config.withCredentials = true;
         } else if (token) {
             // For all other requests, add the Authorization header if we have a token
             config.headers['Authorization'] = `Bearer ${token}`;
@@ -30,10 +33,15 @@ axiosInstance.interceptors.request.use(
             config.baseURL = config.baseURL.slice(0, -1);
         }
         
-        // Ensure credentials are included
-        config.withCredentials = true;
+        // Log request details for debugging
+        console.log('Request config:', {
+            url: config.url,
+            method: config.method,
+            headers: config.headers,
+            data: config.data,
+            withCredentials: config.withCredentials
+        });
         
-        console.log('Request:', config);
         return config;
     },
     (error) => {
@@ -53,6 +61,7 @@ axiosInstance.interceptors.response.use(
             // that falls out of the range of 2xx
             console.error('Response error data:', error.response.data);
             console.error('Response error status:', error.response.status);
+            console.error('Response error headers:', error.response.headers);
             
             // If we get a 401 Unauthorized error, redirect to login
             if (error.response.status === 401) {
@@ -67,7 +76,8 @@ axiosInstance.interceptors.response.use(
                 url: error.config?.url,
                 method: error.config?.method,
                 headers: error.config?.headers,
-                data: error.config?.data
+                data: error.config?.data,
+                baseURL: error.config?.baseURL
             });
         } else {
             // Something happened in setting up the request

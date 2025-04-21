@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Response
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy.orm import Session
@@ -32,10 +32,11 @@ app = FastAPI(
 # Get allowed origins from environment or use defaults
 allowed_origins = [
     "http://localhost:3000",
-    "https://personal-trainer-app-topaz.vercel.app"
+    "https://personal-trainer-app-topaz.vercel.app",
+    "https://scintillating-harmony-production.up.railway.app"
 ]
 
-# Add CORS middleware with more permissive settings
+# Add CORS middleware with more permissive settings for preflight requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -56,9 +57,21 @@ async def log_requests(request: Request, call_next):
     logger.info(f"Request headers: {dict(request.headers)}")
     logger.info(f"Request origin: {origin}")
     
+    # Handle preflight requests
+    if request.method == "OPTIONS":
+        if origin in allowed_origins:
+            response = Response(status_code=200)
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Methods"] = "POST, GET, DELETE, PUT, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Max-Age"] = "3600"
+            return response
+        return Response(status_code=400)
+    
     response = await call_next(request)
     
-    # Add CORS headers for non-OPTIONS requests
+    # Add CORS headers for all responses
     if origin in allowed_origins:
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
