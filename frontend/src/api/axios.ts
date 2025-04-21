@@ -62,7 +62,7 @@ const debugLog = {
 
 const axiosInstance = axios.create({
     baseURL,
-    withCredentials: true,
+    withCredentials: false,
     headers: {
         'accept': 'application/json',
         'content-type': 'application/json'
@@ -76,14 +76,14 @@ axiosInstance.interceptors.request.use(
         
         // Create new headers instance
         const headers = new AxiosHeaders();
-        headers.set('accept', 'application/json');
-        headers.set('content-type', config.url?.includes('/token') 
+        headers.set('Accept', 'application/json');
+        headers.set('Content-Type', config.url?.includes('/token') 
             ? 'application/x-www-form-urlencoded'
             : 'application/json');
 
         // Add authorization header if token exists and not a token request
         if (token && !config.url?.includes('/token')) {
-            headers.set('authorization', `Bearer ${token}`);
+            headers.set('Authorization', `Bearer ${token}`);
         }
         
         config.headers = headers;
