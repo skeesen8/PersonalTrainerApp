@@ -7,8 +7,7 @@ const axiosInstance = axios.create({
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': 'https://personal-trainer-app-topaz.vercel.app'
+        'Accept': 'application/json'
     },
 });
 
@@ -31,11 +30,6 @@ axiosInstance.interceptors.request.use(
             // Ensure content type is set for non-form requests
             config.headers['Content-Type'] = 'application/json';
         }
-        
-        // Add CORS headers
-        config.headers['Access-Control-Allow-Origin'] = 'https://personal-trainer-app-topaz.vercel.app';
-        config.headers['Access-Control-Allow-Methods'] = 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS';
-        config.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept';
         
         // Log request details for debugging
         console.log('Request config:', config);
