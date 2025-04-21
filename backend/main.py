@@ -179,40 +179,43 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return response
 
 @app.post("/token")
-async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
+async def login_for_access_token(
+    request: Request,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
     try:
         logging.info(f"Login attempt for user: {form_data.username}")
         
-        with get_db() as db:
-            user = crud.authenticate_user(db, form_data.username, form_data.password)
-            if not user:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Incorrect username or password",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-                
-            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-            access_token = create_access_token(
-                data={"sub": user.email}, expires_delta=access_token_expires
+        user = crud.authenticate_user(db, form_data.username, form_data.password)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
             )
             
-            # Get origin from request
-            origin = request.headers.get("origin")
-            
-            # Create response with token
-            response = JSONResponse(
-                content={"access_token": access_token, "token_type": "bearer"}
-            )
-            
-            # Add CORS headers if origin is allowed
-            if origin and origin in allowed_origins:
-                response.headers["Access-Control-Allow-Origin"] = origin
-                response.headers["Access-Control-Allow-Credentials"] = "true"
-            
-            logging.info(f"Login successful for user: {form_data.username}")
-            return response
-            
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.email}, expires_delta=access_token_expires
+        )
+        
+        # Get origin from request
+        origin = request.headers.get("origin")
+        
+        # Create response with token
+        response = JSONResponse(
+            content={"access_token": access_token, "token_type": "bearer"}
+        )
+        
+        # Add CORS headers if origin is allowed
+        if origin and origin in allowed_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+        
+        logging.info(f"Login successful for user: {form_data.username}")
+        return response
+        
     except HTTPException as he:
         # Re-raise HTTP exceptions to be handled by the exception handler
         raise
