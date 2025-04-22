@@ -22,9 +22,9 @@ interface User {
 interface MealPlanFormData {
   title: string;
   description: string;
-  date: Date;
+  scheduled_date: Date;
   meals: Meal[];
-  assigned_user_id: string;
+  user_id: string;
 }
 
 const initialMeal: Meal = {
@@ -40,9 +40,9 @@ const initialMeal: Meal = {
 const initialFormData = {
   title: '',
   description: '',
-  date: new Date(),
+  scheduled_date: new Date(),
   meals: [{ ...initialMeal }],
-  assigned_user_id: ''
+  user_id: ''
 };
 
 const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClose, onMealPlanCreated }) => {
@@ -119,7 +119,7 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
     try {
         const response = await api.post('/meal-plans/', {
             ...formData,
-            date: formData.date.toISOString()
+            scheduled_date: formData.scheduled_date.toISOString()
         });
         onMealPlanCreated(response.data);
         setFormData(initialFormData);
@@ -204,8 +204,8 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
               <div>
                 <label className="block text-sm font-medium mb-2">Date</label>
                 <Calendar
-                  onChange={(value) => setFormData({ ...formData, date: value as Date })}
-                  value={formData.date}
+                  onChange={(value) => setFormData({ ...formData, scheduled_date: value as Date })}
+                  value={formData.scheduled_date}
                   className="w-full bg-gray-700 rounded-md p-2"
                 />
               </div>
@@ -214,8 +214,8 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
                 <label className="block text-sm font-medium mb-1">Assigned User ID (Optional)</label>
                 <input
                   type="text"
-                  value={formData.assigned_user_id}
-                  onChange={(e) => setFormData({ ...formData, assigned_user_id: e.target.value })}
+                  value={formData.user_id}
+                  onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
                   className="w-full bg-gray-700 rounded-md p-2"
                   placeholder="Leave empty to assign to yourself"
                 />
