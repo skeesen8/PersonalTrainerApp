@@ -334,19 +334,23 @@ async def create_meal_plan(
                 detail="You can only create meal plans for yourself unless you are an admin"
             )
             
-        # Convert to database model format after validation
-        meal_plan_data = meal_plan.to_db_model()
+        # Create a dict of the meal plan data
+        meal_plan_data = meal_plan.dict()
+        # Serialize the meals list to a JSON string
+        meal_plan_data['meals'] = meal_plan.serialize_meals()
+            
         created_meal_plan = crud.create_meal_plan(db=db, meal_plan=schemas.MealPlanCreate(**meal_plan_data))
-        
-        # The from_orm method will handle JSON deserialization
         return created_meal_plan
+        
     except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
     except Exception as e:
         logger.error(f"Unexpected error creating meal plan: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while creating the meal plan"
