@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime
 import json
 
@@ -85,6 +85,16 @@ class MealPlanBase(BaseModel):
 
 class MealPlanCreate(MealPlanBase):
     """Schema for creating a new meal plan"""
+    @validator('meals', pre=True)
+    def validate_meals(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
+
+    def serialize_meals(self):
+        """Serialize meals to JSON string for database storage"""
+        return json.dumps([meal.dict() for meal in self.meals])
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -106,28 +116,18 @@ class MealPlanCreate(MealPlanBase):
             }
         }
 
-    def to_db_model(self):
-        """Convert the validated data to database model format"""
-        data = self.dict()
-        data['meals'] = json.dumps(data['meals'])
-        return data
-
 class MealPlan(MealPlanBase):
     id: int
     created_at: datetime
+
+    @validator('meals', pre=True)
+    def validate_meals(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
 
     class Config:
         orm_mode = True
         json_encoders = {
             datetime: lambda v: v.isoformat()
-        }
-
-    @classmethod
-    def from_orm(cls, obj):
-        # Convert the meals JSON string back to a list when reading from DB
-        if isinstance(obj.meals, str):
-            try:
-                obj.meals = json.loads(obj.meals)
-            except json.JSONDecodeError:
-                obj.meals = []  # Fallback if JSON is invalid
-        return super().from_orm(obj) 
+        } 
