@@ -325,8 +325,11 @@ async def create_meal_plan(
     db: Session = Depends(get_db)
 ):
     try:
+        logger.info(f"Received meal plan data: {meal_plan.dict()}")
+        
         if not meal_plan.user_id:
             meal_plan.user_id = current_user.id
+            logger.info(f"Set user_id to current user: {current_user.id}")
         
         if meal_plan.user_id != current_user.id and not current_user.is_admin:
             raise HTTPException(
@@ -336,14 +339,25 @@ async def create_meal_plan(
             
         # Create a dict of the meal plan data
         meal_plan_data = meal_plan.dict()
+        logger.info(f"Meal plan data before serialization: {meal_plan_data}")
+        
         # Serialize the meals list to a JSON string
-        meal_plan_data['meals'] = meal_plan.serialize_meals()
+        try:
+            meal_plan_data['meals'] = meal_plan.serialize_meals()
+            logger.info(f"Successfully serialized meals: {meal_plan_data['meals']}")
+        except Exception as e:
+            logger.error(f"Error serializing meals: {str(e)}")
+            raise ValueError(f"Failed to serialize meals: {str(e)}")
             
+        logger.info(f"Creating meal plan with data: {meal_plan_data}")
         created_meal_plan = crud.create_meal_plan(db=db, meal_plan=schemas.MealPlanCreate(**meal_plan_data))
+        logger.info(f"Successfully created meal plan: {created_meal_plan}")
+        
         return created_meal_plan
         
     except ValueError as e:
         logger.error(f"Validation error: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)

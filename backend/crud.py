@@ -139,12 +139,22 @@ def get_user_meal_plans(db: Session, user_id: int, skip: int = 0, limit: int = 1
 def create_meal_plan(db: Session, meal_plan: schemas.MealPlanCreate):
     """Create a new meal plan"""
     try:
-        db_meal_plan = models.MealPlan(**meal_plan.dict())
+        # Create the meal plan model
+        db_meal_plan = models.MealPlan(
+            title=meal_plan.title,
+            description=meal_plan.description,
+            scheduled_date=meal_plan.scheduled_date,
+            meals=meal_plan.serialize_meals(),  # Use the serialize_meals method
+            user_id=meal_plan.user_id
+        )
+        
+        # Add and commit to database
         db.add(db_meal_plan)
         db.commit()
         db.refresh(db_meal_plan)
         return db_meal_plan
     except Exception as e:
+        print(f"Error creating meal plan: {str(e)}")
         db.rollback()
         raise e
 
