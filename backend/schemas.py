@@ -106,6 +106,12 @@ class MealPlanCreate(MealPlanBase):
             }
         }
 
+    def to_db_model(self):
+        """Convert the validated data to database model format"""
+        data = self.dict()
+        data['meals'] = json.dumps(data['meals'])
+        return data
+
 class MealPlan(MealPlanBase):
     id: int
     created_at: datetime
@@ -120,5 +126,8 @@ class MealPlan(MealPlanBase):
     def from_orm(cls, obj):
         # Convert the meals JSON string back to a list when reading from DB
         if isinstance(obj.meals, str):
-            obj.meals = json.loads(obj.meals)
+            try:
+                obj.meals = json.loads(obj.meals)
+            except json.JSONDecodeError:
+                obj.meals = []  # Fallback if JSON is invalid
         return super().from_orm(obj) 
