@@ -1,6 +1,7 @@
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+import json
 
 # Token schemas
 class Token(BaseModel):
@@ -77,6 +78,11 @@ class MealPlanBase(BaseModel):
     meals: List[Meal]
     user_id: int
 
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
 class MealPlanCreate(MealPlanBase):
     """Schema for creating a new meal plan"""
     class Config:
@@ -105,4 +111,14 @@ class MealPlan(MealPlanBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True 
+        orm_mode = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
+    @classmethod
+    def from_orm(cls, obj):
+        # Convert the meals JSON string back to a list when reading from DB
+        if isinstance(obj.meals, str):
+            obj.meals = json.loads(obj.meals)
+        return super().from_orm(obj) 
