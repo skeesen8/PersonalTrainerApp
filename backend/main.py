@@ -165,18 +165,11 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     return response
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """Handle validation errors and maintain CORS headers"""
-    logger.error(f"Validation error: {str(exc)}")
-    response = JSONResponse(
+async def validation_exception_handler(request, exc):
+    return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={"detail": exc.errors()},
     )
-    origin = request.headers.get("origin")
-    if origin in allowed_origins:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-    return response
 
 @app.post("/token")
 async def login_for_access_token(
@@ -332,75 +325,26 @@ async def create_meal_plan(
     db: Session = Depends(get_db)
 ):
     try:
-        # Log the incoming request data
-        logger.info(f"Creating meal plan for user {meal_plan.assigned_user_id}")
+        if not meal_plan.user_id:
+            meal_plan.user_id = current_user.id
         
-        # If no assigned_user_id is provided, create meal plan for self
-        if not meal_plan.assigned_user_id:
-            meal_plan.assigned_user_id = current_user.id
-            logger.info(f"No assigned user provided, using current user: {current_user.id}")
-        
-        # Check if assigned user exists and current user has permission
-        if meal_plan.assigned_user_id != current_user.id:
-            if not current_user.is_admin:
-                logger.warning(f"Non-admin user {current_user.id} attempted to create meal plan for user {meal_plan.assigned_user_id}")
-                raise HTTPException(
-                    status_code=403,
-                    detail="Only admins can create meal plans for other users"
-                )
-            
-            try:
-                assigned_user = crud.get_user(db, meal_plan.assigned_user_id)
-                if not assigned_user:
-                    logger.warning(f"Assigned user {meal_plan.assigned_user_id} not found")
-                    raise HTTPException(
-                        status_code=404,
-                        detail="Assigned user not found"
-                    )
-                
-                # Query current user again to ensure relationships are up to date
-                current_user_fresh = crud.get_user(db, current_user.id)
-                if not current_user_fresh:
-                    logger.error("Could not refresh current user data")
-                    raise HTTPException(
-                        status_code=500,
-                        detail="Error accessing user data"
-                    )
-                
-                if assigned_user.id not in [u.id for u in current_user_fresh.assigned_users]:
-                    logger.warning(f"User {current_user.id} attempted to create meal plan for non-assigned user {meal_plan.assigned_user_id}")
-                    raise HTTPException(
-                        status_code=403,
-                        detail="You can only create meal plans for your assigned users"
-                    )
-            except HTTPException as he:
-                raise he
-            except Exception as e:
-                logger.error(f"Error checking user relationships: {str(e)}")
-                raise HTTPException(
-                    status_code=500,
-                    detail="Error verifying user relationships"
-                )
-        
-        # Create the meal plan
-        try:
-            db_meal_plan = crud.create_meal_plan(db, meal_plan)
-            logger.info(f"Successfully created meal plan with ID: {db_meal_plan.id}")
-            return db_meal_plan
-            
-        except Exception as e:
-            logger.error(f"Error in crud.create_meal_plan: {str(e)}")
+        if meal_plan.user_id != current_user.id and not current_user.is_admin:
             raise HTTPException(
-                status_code=500,
-                detail="Error creating meal plan in database"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only create meal plans for yourself unless you are an admin"
             )
-        
-    except HTTPException as he:
-        raise he
+            
+        created_meal_plan = crud.create_meal_plan(db=db, meal_plan=meal_plan)
+        return created_meal_plan
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     except Exception as e:
         logger.error(f"Unexpected error creating meal plan: {str(e)}")
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred while creating the meal plan"
         )
 
