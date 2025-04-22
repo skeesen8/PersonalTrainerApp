@@ -131,10 +131,33 @@ def create_workout_plan(db: Session, workout_plan: schemas.WorkoutPlanCreate):
     return db_workout_plan
 
 def get_meal_plans(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.MealPlan).offset(skip).limit(limit).all()
+    """Get all meal plans with deserialized meals"""
+    try:
+        meal_plans = db.query(models.MealPlan).offset(skip).limit(limit).all()
+        # Deserialize meals for each meal plan
+        for meal_plan in meal_plans:
+            if meal_plan.meals:
+                meal_plan.meals = json.loads(meal_plan.meals)
+        return meal_plans
+    except Exception as e:
+        print(f"Error getting meal plans: {str(e)}")
+        raise
 
 def get_user_meal_plans(db: Session, user_id: int, skip: int = 0, limit: int = 100):
-    return db.query(models.MealPlan).filter(models.MealPlan.user_id == user_id).offset(skip).limit(limit).all()
+    """Get meal plans for a specific user with deserialized meals"""
+    try:
+        meal_plans = db.query(models.MealPlan).filter(
+            models.MealPlan.user_id == user_id
+        ).offset(skip).limit(limit).all()
+        
+        # Deserialize meals for each meal plan
+        for meal_plan in meal_plans:
+            if meal_plan.meals:
+                meal_plan.meals = json.loads(meal_plan.meals)
+        return meal_plans
+    except Exception as e:
+        print(f"Error getting user meal plans: {str(e)}")
+        raise
 
 def create_meal_plan(db: Session, meal_plan: schemas.MealPlanCreate):
     """Create a new meal plan"""
