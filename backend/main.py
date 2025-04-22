@@ -333,8 +333,15 @@ async def create_meal_plan(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only create meal plans for yourself unless you are an admin"
             )
+        
+        # Convert the meal plan data to a dict and serialize meals to JSON string
+        meal_plan_data = meal_plan.dict()
+        meal_plan_data['meals'] = json.dumps(meal_plan_data['meals'])
             
-        created_meal_plan = crud.create_meal_plan(db=db, meal_plan=meal_plan)
+        created_meal_plan = crud.create_meal_plan(db=db, meal_plan=schemas.MealPlanCreate(**meal_plan_data))
+        
+        # Deserialize the meals JSON string back to a list for the response
+        created_meal_plan.meals = json.loads(created_meal_plan.meals)
         return created_meal_plan
     except ValueError as e:
         raise HTTPException(
