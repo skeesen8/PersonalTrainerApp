@@ -28,7 +28,7 @@ const initialMeal: Meal = {
 const initialFormData = {
   title: '',
   description: '',
-  scheduled_date: new Date().toISOString().split('T')[0],
+  scheduled_date: new Date().toISOString(),
   meals: [{ ...initialMeal }],
   user_id: ''
 };
@@ -139,9 +139,12 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
               Date
             </label>
             <input
-              type="date"
-              value={formData.scheduled_date}
-              onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
+              type="datetime-local"
+              value={formData.scheduled_date.slice(0, 16)}
+              onChange={(e) => setFormData({ 
+                ...formData, 
+                scheduled_date: new Date(e.target.value).toISOString() 
+              })}
               className="miami-input"
               required
             />
