@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api/axios';
 import Button from './Button';
 import { Meal } from '../types/meal';
+import { useAuth } from '../context/AuthContext';
 
 interface CreateMealPlanModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
   const [formData, setFormData] = useState(initialFormData);
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
   const [error, setError] = useState('');
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchAssignedUsers = async () => {
@@ -49,37 +51,28 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
       }
     };
 
-    if (isOpen) {
+    if (isOpen && user?.is_admin) {
       fetchAssignedUsers();
     }
-  }, [isOpen]);
-
-  const handleMealChange = (index: number, field: keyof Meal, value: string | number) => {
-    const newMeals = [...formData.meals];
-    newMeals[index] = {
-      ...newMeals[index],
-      [field]: field === 'name' || field === 'time' || field === 'ingredients' ? value : Number(value)
-    };
-    setFormData({ ...formData, meals: newMeals });
-  };
-
-  const addMeal = () => {
-    setFormData({
-      ...formData,
-      meals: [...formData.meals, { ...initialMeal }]
-    });
-  };
-
-  const removeMeal = (index: number) => {
-    const newMeals = formData.meals.filter((_, i) => i !== index);
-    setFormData({ ...formData, meals: newMeals });
-  };
+  }, [isOpen, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    if (!formData.user_id) {
+      setError('Please select a user to assign this meal plan to');
+      return;
+    }
+
     try {
-      await api.post('/meal-plans/', formData);
+      const submissionData = {
+        ...formData,
+        scheduled_date: new Date(formData.scheduled_date).toISOString(),
+        user_id: parseInt(formData.user_id)
+      };
+
+      await api.post('/meal-plans/', submissionData);
       onMealPlanCreated();
       setFormData(initialFormData);
       onClose();
@@ -111,47 +104,6 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-white/80 text-sm font-medium mb-2">
-              Title
-            </label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="miami-input"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-white/80 text-sm font-medium mb-2">
-              Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="miami-input min-h-[100px]"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-white/80 text-sm font-medium mb-2">
-              Date
-            </label>
-            <input
-              type="datetime-local"
-              value={formData.scheduled_date.slice(0, 16)}
-              onChange={(e) => setFormData({ 
-                ...formData, 
-                scheduled_date: new Date(e.target.value).toISOString() 
-              })}
-              className="miami-input"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-white/80 text-sm font-medium mb-2">
               Assign to User
             </label>
             <select
@@ -169,13 +121,59 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
             </select>
           </div>
 
+          <div>
+            <label className="block text-white/80 text-sm font-medium mb-2">
+              Title
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="miami-input"
+              required
+              placeholder="Enter meal plan title"
+            />
+          </div>
+
+          <div>
+            <label className="block text-white/80 text-sm font-medium mb-2">
+              Description
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="miami-input min-h-[100px]"
+              required
+              placeholder="Enter meal plan description"
+            />
+          </div>
+
+          <div>
+            <label className="block text-white/80 text-sm font-medium mb-2">
+              Schedule Date
+            </label>
+            <input
+              type="datetime-local"
+              value={formData.scheduled_date.slice(0, 16)}
+              onChange={(e) => setFormData({ 
+                ...formData, 
+                scheduled_date: new Date(e.target.value).toISOString() 
+              })}
+              className="miami-input"
+              required
+            />
+          </div>
+
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold text-white">Meals</h3>
               <Button
                 type="button"
                 variant="outline"
-                onClick={addMeal}
+                onClick={() => setFormData({
+                  ...formData,
+                  meals: [...formData.meals, { ...initialMeal }]
+                })}
               >
                 Add Meal
               </Button>
@@ -188,7 +186,10 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
                   {index > 0 && (
                     <button
                       type="button"
-                      onClick={() => removeMeal(index)}
+                      onClick={() => {
+                        const newMeals = formData.meals.filter((_, i) => i !== index);
+                        setFormData({ ...formData, meals: newMeals });
+                      }}
                       className="text-red-400 hover:text-red-300"
                     >
                       Remove
@@ -204,9 +205,14 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
                     <input
                       type="text"
                       value={meal.name}
-                      onChange={(e) => handleMealChange(index, 'name', e.target.value)}
+                      onChange={(e) => {
+                        const newMeals = [...formData.meals];
+                        newMeals[index] = { ...meal, name: e.target.value };
+                        setFormData({ ...formData, meals: newMeals });
+                      }}
                       className="miami-input"
                       required
+                      placeholder="Enter meal name"
                     />
                   </div>
                   <div>
@@ -216,7 +222,11 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
                     <input
                       type="time"
                       value={meal.time}
-                      onChange={(e) => handleMealChange(index, 'time', e.target.value)}
+                      onChange={(e) => {
+                        const newMeals = [...formData.meals];
+                        newMeals[index] = { ...meal, time: e.target.value };
+                        setFormData({ ...formData, meals: newMeals });
+                      }}
                       className="miami-input"
                       required
                     />
@@ -228,9 +238,14 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
                     <input
                       type="number"
                       value={meal.calories}
-                      onChange={(e) => handleMealChange(index, 'calories', e.target.value)}
+                      onChange={(e) => {
+                        const newMeals = [...formData.meals];
+                        newMeals[index] = { ...meal, calories: parseInt(e.target.value) || 0 };
+                        setFormData({ ...formData, meals: newMeals });
+                      }}
                       className="miami-input"
                       required
+                      min="0"
                     />
                   </div>
                   <div>
@@ -240,9 +255,15 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
                     <input
                       type="number"
                       value={meal.protein}
-                      onChange={(e) => handleMealChange(index, 'protein', e.target.value)}
+                      onChange={(e) => {
+                        const newMeals = [...formData.meals];
+                        newMeals[index] = { ...meal, protein: parseFloat(e.target.value) || 0 };
+                        setFormData({ ...formData, meals: newMeals });
+                      }}
                       className="miami-input"
                       required
+                      min="0"
+                      step="0.1"
                     />
                   </div>
                   <div>
@@ -252,9 +273,15 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
                     <input
                       type="number"
                       value={meal.carbs}
-                      onChange={(e) => handleMealChange(index, 'carbs', e.target.value)}
+                      onChange={(e) => {
+                        const newMeals = [...formData.meals];
+                        newMeals[index] = { ...meal, carbs: parseFloat(e.target.value) || 0 };
+                        setFormData({ ...formData, meals: newMeals });
+                      }}
                       className="miami-input"
                       required
+                      min="0"
+                      step="0.1"
                     />
                   </div>
                   <div>
@@ -264,9 +291,15 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
                     <input
                       type="number"
                       value={meal.fats}
-                      onChange={(e) => handleMealChange(index, 'fats', e.target.value)}
+                      onChange={(e) => {
+                        const newMeals = [...formData.meals];
+                        newMeals[index] = { ...meal, fats: parseFloat(e.target.value) || 0 };
+                        setFormData({ ...formData, meals: newMeals });
+                      }}
                       className="miami-input"
                       required
+                      min="0"
+                      step="0.1"
                     />
                   </div>
                   <div className="col-span-2">
@@ -275,9 +308,14 @@ const CreateMealPlanModal: React.FC<CreateMealPlanModalProps> = ({ isOpen, onClo
                     </label>
                     <textarea
                       value={meal.ingredients}
-                      onChange={(e) => handleMealChange(index, 'ingredients', e.target.value)}
+                      onChange={(e) => {
+                        const newMeals = [...formData.meals];
+                        newMeals[index] = { ...meal, ingredients: e.target.value };
+                        setFormData({ ...formData, meals: newMeals });
+                      }}
                       className="miami-input min-h-[80px]"
                       required
+                      placeholder="Enter ingredients"
                     />
                   </div>
                 </div>
