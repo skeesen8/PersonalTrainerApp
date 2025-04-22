@@ -380,11 +380,44 @@ def read_user_workout_plans(
 
 @app.get("/meal-plans/user", response_model=List[schemas.MealPlan])
 def read_user_meal_plans(
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """Get meal plans for the current user"""
-    with get_db() as db:
-        return crud.get_user_meal_plans(db, user_id=current_user.id)
+    try:
+        logger.info(f"Fetching meal plans for user {current_user.id}")
+        meal_plans = crud.get_user_meal_plans(db, user_id=current_user.id)
+        logger.info(f"Found {len(meal_plans)} meal plans")
+        
+        # Validate each meal plan before returning
+        validated_meal_plans = []
+        for meal_plan in meal_plans:
+            try:
+                # Convert to dict and validate through schema
+                meal_plan_dict = {
+                    "id": meal_plan.id,
+                    "title": meal_plan.title,
+                    "description": meal_plan.description,
+                    "scheduled_date": meal_plan.scheduled_date,
+                    "meals": meal_plan.meals,  # Already deserialized in crud function
+                    "user_id": meal_plan.user_id,
+                    "created_at": meal_plan.created_at
+                }
+                validated_meal_plan = schemas.MealPlan(**meal_plan_dict)
+                validated_meal_plans.append(validated_meal_plan)
+            except Exception as e:
+                logger.error(f"Error validating meal plan {meal_plan.id}: {str(e)}")
+                continue
+        
+        return validated_meal_plans
+        
+    except Exception as e:
+        logger.error(f"Error fetching meal plans: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching meal plans: {str(e)}"
+        )
 
 @app.get("/workout-plans/", response_model=List[schemas.WorkoutPlan])
 def read_workout_plans(
