@@ -77,6 +77,11 @@ class WorkoutPlanCreate(WorkoutPlanBase):
         """Serialize exercises to JSON string for database storage"""
         return json.dumps([exercise.dict() for exercise in self.exercises])
 
+    @property
+    def user_id(self) -> int:
+        """Map assigned_user_id to user_id for database compatibility"""
+        return self.assigned_user_id
+
     class Config:
         json_schema_extra = {
             "example": {
