@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import Button from './Button';
 
-interface CreateWorkoutModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onWorkoutCreated: () => void;
+interface Exercise {
+  name: string;
+  sets: number;
+  reps: number;
+  weight: number;
 }
 
 interface User {
@@ -14,18 +16,32 @@ interface User {
   full_name: string;
 }
 
+interface CreateWorkoutModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onWorkoutCreated: () => void;
+}
+
+const initialExercise: Exercise = {
+  name: '',
+  sets: 0,
+  reps: 0,
+  weight: 0
+};
+
 const initialFormData = {
   title: '',
   description: '',
-  date: new Date().toISOString().split('T')[0],
-  exercises: [{ name: '', sets: '', reps: '', weight: '' }],
-  assigned_user_id: ''
+  scheduled_date: new Date().toISOString(),
+  exercises: [{ ...initialExercise }],
+  user_id: ''
 };
 
 const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose, onWorkoutCreated }) => {
   const [formData, setFormData] = useState(initialFormData);
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
   const [error, setError] = useState('');
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchAssignedUsers = async () => {
@@ -38,21 +54,24 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
       }
     };
 
-    if (isOpen) {
+    if (isOpen && user?.is_admin) {
       fetchAssignedUsers();
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
 
-  const handleExerciseChange = (index: number, field: string, value: string) => {
+  const handleExerciseChange = (index: number, field: string, value: string | number) => {
     const newExercises = [...formData.exercises];
-    newExercises[index] = { ...newExercises[index], [field]: value };
+    newExercises[index] = { 
+      ...newExercises[index], 
+      [field]: field === 'name' ? value : Number(value) 
+    };
     setFormData({ ...formData, exercises: newExercises });
   };
 
   const addExercise = () => {
     setFormData({
       ...formData,
-      exercises: [...formData.exercises, { name: '', sets: '', reps: '', weight: '' }]
+      exercises: [...formData.exercises, { ...initialExercise }]
     });
   };
 
@@ -64,8 +83,26 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!formData.user_id) {
+      setError('Please select a user to assign this workout plan to');
+      return;
+    }
+
     try {
-      await api.post('/workout-plans/', formData);
+      const submissionData = {
+        ...formData,
+        scheduled_date: new Date(formData.scheduled_date).toISOString(),
+        user_id: parseInt(formData.user_id),
+        exercises: formData.exercises.map(exercise => ({
+          ...exercise,
+          sets: Number(exercise.sets),
+          reps: Number(exercise.reps),
+          weight: Number(exercise.weight)
+        }))
+      };
+
+      await api.post('/workout-plans/', submissionData);
       onWorkoutCreated();
       setFormData(initialFormData);
       onClose();
@@ -122,12 +159,12 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
 
           <div>
             <label className="block text-white/80 text-sm font-medium mb-2">
-              Date
+              Schedule Date
             </label>
             <input
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              type="datetime-local"
+              value={formData.scheduled_date.slice(0, 16)}
+              onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
               className="miami-input"
               required
             />
@@ -138,8 +175,8 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
               Assign to User
             </label>
             <select
-              value={formData.assigned_user_id}
-              onChange={(e) => setFormData({ ...formData, assigned_user_id: e.target.value })}
+              value={formData.user_id}
+              onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
               className="miami-input"
               required
             >
@@ -200,6 +237,8 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
                       type="number"
                       value={exercise.sets}
                       onChange={(e) => handleExerciseChange(index, 'sets', e.target.value)}
+                      min="1"
+                      step="1"
                       className="miami-input"
                       required
                     />
@@ -212,6 +251,8 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
                       type="number"
                       value={exercise.reps}
                       onChange={(e) => handleExerciseChange(index, 'reps', e.target.value)}
+                      min="1"
+                      step="1"
                       className="miami-input"
                       required
                     />
@@ -224,6 +265,8 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
                       type="number"
                       value={exercise.weight}
                       onChange={(e) => handleExerciseChange(index, 'weight', e.target.value)}
+                      min="0"
+                      step="0.5"
                       className="miami-input"
                       required
                     />
