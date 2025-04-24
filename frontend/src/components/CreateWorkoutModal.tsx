@@ -32,9 +32,9 @@ const initialExercise: Exercise = {
 const initialFormData = {
   title: '',
   description: '',
-  scheduled_date: new Date().toISOString(),
+  date: new Date().toISOString(),
   exercises: [{ ...initialExercise }],
-  user_id: ''
+  assigned_user_id: ''
 };
 
 const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose, onWorkoutCreated }) => {
@@ -91,7 +91,7 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
     e.preventDefault();
     setError('');
 
-    if (!formData.user_id) {
+    if (!formData.assigned_user_id) {
       setError('Please select a user to assign this workout plan to');
       return;
     }
@@ -120,8 +120,8 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
       const submissionData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        scheduled_date: new Date(formData.scheduled_date).toISOString(),
-        user_id: parseInt(formData.user_id),
+        date: new Date(formData.date).toISOString(),
+        assigned_user_id: parseInt(formData.assigned_user_id),
         exercises: formData.exercises.map(exercise => ({
           name: exercise.name.trim(),
           sets: Number(exercise.sets),
@@ -199,8 +199,8 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
             </label>
             <input
               type="datetime-local"
-              value={formData.scheduled_date.slice(0, 16)}
-              onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
+              value={formData.date.slice(0, 16)}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               className="miami-input"
               required
             />
@@ -211,8 +211,8 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
               Assign to User
             </label>
             <select
-              value={formData.user_id}
-              onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
+              value={formData.assigned_user_id}
+              onChange={(e) => setFormData({ ...formData, assigned_user_id: e.target.value })}
               className="miami-input"
               required
             >
