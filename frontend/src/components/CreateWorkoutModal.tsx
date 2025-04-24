@@ -34,11 +34,17 @@ const initialFormData = {
   description: '',
   scheduled_date: new Date().toISOString(),
   exercises: [{ ...initialExercise }],
-  assigned_user_id: ''
+  assigned_user_id: null
 };
 
 const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose, onWorkoutCreated }) => {
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    scheduled_date: string;
+    exercises: Exercise[];
+    assigned_user_id: number | null;
+  }>(initialFormData);
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
   const [error, setError] = useState('');
   const { user } = useAuth();
@@ -121,7 +127,7 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
         title: formData.title.trim(),
         description: formData.description.trim(),
         scheduled_date: new Date(formData.scheduled_date).toISOString(),
-        assigned_user_id: parseInt(formData.assigned_user_id),
+        assigned_user_id: formData.assigned_user_id,
         exercises: formData.exercises.map(exercise => ({
           name: exercise.name.trim(),
           sets: Number(exercise.sets),
@@ -209,18 +215,18 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
 
           <div>
             <label className="block text-white/80 text-sm font-medium mb-2">
-              Assign to User
+              Assign To User
             </label>
             <select
-              value={formData.assigned_user_id}
-              onChange={(e) => setFormData({ ...formData, assigned_user_id: e.target.value })}
+              value={formData.assigned_user_id?.toString() || ''}
+              onChange={(e) => setFormData({ ...formData, assigned_user_id: e.target.value ? parseInt(e.target.value) : null })}
               className="miami-input"
               required
             >
               <option value="">Select a user</option>
               {assignedUsers.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.full_name || user.email}
+                  {user.full_name} ({user.email})
                 </option>
               ))}
             </select>
