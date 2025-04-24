@@ -56,19 +56,42 @@ class Meal(BaseModel):
 class WorkoutPlanBase(BaseModel):
     title: str
     description: Optional[str] = None
-    date: datetime
+    scheduled_date: datetime
     exercises: List[Exercise]
     assigned_user_id: int
 
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
 class WorkoutPlanCreate(WorkoutPlanBase):
-    pass
+    """Schema for creating a new workout plan"""
+    @validator('exercises', pre=True)
+    def validate_exercises(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
+
+    def serialize_exercises(self):
+        """Serialize exercises to JSON string for database storage"""
+        return json.dumps([exercise.dict() for exercise in self.exercises])
 
 class WorkoutPlan(WorkoutPlanBase):
     id: int
     created_at: datetime
 
+    @validator('exercises', pre=True)
+    def validate_exercises(cls, v):
+        if isinstance(v, str):
+            return json.loads(v)
+        return v
+
     class Config:
         orm_mode = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
 
 # Meal plan schemas
 class MealPlanBase(BaseModel):
