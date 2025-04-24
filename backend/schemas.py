@@ -58,7 +58,6 @@ class WorkoutPlanBase(BaseModel):
     description: Optional[str] = None
     scheduled_date: datetime
     exercises: List[Exercise]
-    assigned_user_id: int
 
     class Config:
         json_encoders = {
@@ -67,6 +66,8 @@ class WorkoutPlanBase(BaseModel):
 
 class WorkoutPlanCreate(WorkoutPlanBase):
     """Schema for creating a new workout plan"""
+    assigned_user_id: int
+
     @validator('exercises', pre=True)
     def validate_exercises(cls, v):
         if isinstance(v, str):
@@ -76,11 +77,6 @@ class WorkoutPlanCreate(WorkoutPlanBase):
     def serialize_exercises(self):
         """Serialize exercises to JSON string for database storage"""
         return json.dumps([exercise.dict() for exercise in self.exercises])
-
-    @property
-    def user_id(self) -> int:
-        """Map assigned_user_id to user_id for database compatibility"""
-        return self.assigned_user_id
 
     class Config:
         json_schema_extra = {
@@ -103,6 +99,7 @@ class WorkoutPlanCreate(WorkoutPlanBase):
 class WorkoutPlan(WorkoutPlanBase):
     id: int
     created_at: datetime
+    user_id: int
 
     @validator('exercises', pre=True)
     def validate_exercises(cls, v):
