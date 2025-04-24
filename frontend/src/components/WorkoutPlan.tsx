@@ -20,20 +20,17 @@ interface Exercise {
   name: string;
   sets: number;
   reps: number;
-  rest: string;
+  weight: number;
 }
 
 interface WorkoutPlan {
   id: number;
   title: string;
   description: string;
-  date: string;
-  exercises: {
-    name: string;
-    sets: number;
-    reps: number;
-    weight: number;
-  }[];
+  scheduled_date: string;
+  exercises: Exercise[];
+  user_id: number;
+  created_at?: string;
 }
 
 const WorkoutPlan: React.FC = () => {
@@ -47,9 +44,11 @@ const WorkoutPlan: React.FC = () => {
     const fetchWorkoutPlans = async () => {
       try {
         const response = await api.get('/workout-plans/user');
+        console.log('Fetched workout plans:', response.data);
         setWorkoutPlans(response.data);
         setLoading(false);
       } catch (err) {
+        console.error('Error fetching workout plans:', err);
         setError('Failed to fetch workout plans');
         setLoading(false);
       }
@@ -60,7 +59,7 @@ const WorkoutPlan: React.FC = () => {
 
   const getWorkoutsForDate = (date: Date) => {
     return workoutPlans.filter(plan => {
-      const planDate = new Date(plan.date);
+      const planDate = new Date(plan.scheduled_date);
       return planDate.toDateString() === date.toDateString();
     });
   };
@@ -109,6 +108,12 @@ const WorkoutPlan: React.FC = () => {
         <div className="miami-card p-8">
           <h1 className="text-3xl font-bold text-white mb-6">Your Workout Plan</h1>
           
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6">
+              {error}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
               <Calendar
@@ -125,7 +130,7 @@ const WorkoutPlan: React.FC = () => {
               </h2>
 
               {loading ? (
-                <div className="text-white/60">Loading workouts...</div>
+                <div className="text-white/60">Loading workout plans...</div>
               ) : selectedWorkouts.length > 0 ? (
                 <div className="space-y-4">
                   {selectedWorkouts.map((workout) => (
