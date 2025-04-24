@@ -312,9 +312,13 @@ def create_workout_plan(
         if not current_user.is_admin:
             raise HTTPException(status_code=403, detail="Not authorized to create workout plans")
         
-        # Verify the assigned user belongs to this admin
+        # Verify the assigned user exists
         assigned_user = crud.get_user(db, workout_plan.assigned_user_id)
-        if not assigned_user or assigned_user.id not in [u.id for u in current_user.assigned_users]:
+        if not assigned_user:
+            raise HTTPException(status_code=404, detail="Assigned user not found")
+        
+        # If admin has assigned users, verify this user is one of them
+        if current_user.assigned_users and assigned_user.id not in [u.id for u in current_user.assigned_users]:
             raise HTTPException(status_code=403, detail="Not authorized to create plans for this user")
         
         # Create a dict of the workout plan data

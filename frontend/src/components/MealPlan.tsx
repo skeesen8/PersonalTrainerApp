@@ -49,23 +49,30 @@ const MealPlan: React.FC = () => {
   }, []);
 
   const getMealPlansForDate = (date: Date) => {
-    return mealPlans.filter(plan => {
-      // Parse the scheduled_date string into a Date object
+    if (!mealPlans) return [];
+    
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    return mealPlans.filter((plan) => {
       const planDate = new Date(plan.scheduled_date);
+      planDate.setUTCHours(0, 0, 0, 0);
       
-      // Compare only the date components (year, month, day)
-      return (
-        planDate.getFullYear() === date.getFullYear() &&
-        planDate.getMonth() === date.getMonth() &&
-        planDate.getDate() === date.getDate()
-      );
+      console.log('Comparing dates:', {
+        original: plan.scheduled_date,
+        planDateUTC: planDate.toISOString(),
+        selectedDateUTC: startOfDay.toISOString(),
+        matches: planDate.getTime() === startOfDay.getTime()
+      });
+
+      return planDate.getTime() === startOfDay.getTime();
     });
   };
 
   const tileContent = ({ date }: { date: Date }) => {
     const plans = getMealPlansForDate(date);
     if (plans.length > 0) {
-      return (
+    return (
         <div className="text-[#00f0ff] text-xs mt-1">
           {plans.length} meal plan{plans.length > 1 ? 's' : ''}
         </div>
