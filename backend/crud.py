@@ -127,42 +127,15 @@ def get_workout_plans(db: Session, skip: int = 0, limit: int = 100):
 def get_user_workout_plans(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     """Get workout plans for a specific user with deserialized exercises"""
     try:
-        print(f"Fetching workout plans for user {user_id}")
         workout_plans = db.query(models.WorkoutPlan).filter(
             models.WorkoutPlan.user_id == user_id
         ).offset(skip).limit(limit).all()
         
-        print(f"Found {len(workout_plans)} workout plans")
-        result_plans = []
-        
         # Deserialize exercises for each workout plan
         for workout_plan in workout_plans:
-            try:
-                plan_dict = {
-                    "id": workout_plan.id,
-                    "title": workout_plan.title,
-                    "description": workout_plan.description,
-                    "scheduled_date": workout_plan.scheduled_date,
-                    "user_id": workout_plan.user_id,
-                    "created_at": workout_plan.created_at,
-                    "exercises": []
-                }
-                
-                if workout_plan.exercises:
-                    try:
-                        plan_dict["exercises"] = json.loads(workout_plan.exercises)
-                        print(f"Successfully deserialized exercises for plan {workout_plan.id}")
-                    except json.JSONDecodeError as je:
-                        print(f"JSON decode error for plan {workout_plan.id}: {str(je)}")
-                        print(f"Raw exercises data: {workout_plan.exercises}")
-                        plan_dict["exercises"] = []
-                
-                result_plans.append(plan_dict)
-            except Exception as e:
-                print(f"Error processing workout plan {workout_plan.id}: {str(e)}")
-                continue
-        
-        return result_plans
+            if workout_plan.exercises:
+                workout_plan.exercises = json.loads(workout_plan.exercises)
+        return workout_plans
     except Exception as e:
         print(f"Error getting user workout plans: {str(e)}")
         raise
