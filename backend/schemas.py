@@ -173,4 +173,60 @@ class MealPlan(MealPlanBase):
         orm_mode = True
         json_encoders = {
             datetime: lambda v: v.isoformat()
+        }
+
+class AIMealPlanRequest(BaseModel):
+    """Schema for requesting an AI-generated meal plan"""
+    user_id: int
+    prompt: str  # The coach's prompt for meal plan generation
+    dietary_preferences: Optional[str] = None
+    calories_target: Optional[int] = None
+    protein_target: Optional[int] = None
+    carbs_target: Optional[int] = None
+    fats_target: Optional[int] = None
+    meals_per_day: Optional[int] = 3
+    scheduled_date: datetime
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": 5,
+                "prompt": "Create a high-protein meal plan for muscle gain",
+                "dietary_preferences": "No dairy, high protein",
+                "calories_target": 2500,
+                "protein_target": 180,
+                "carbs_target": 250,
+                "fats_target": 80,
+                "meals_per_day": 4,
+                "scheduled_date": "2025-04-20T18:07:48.990Z"
+            }
+        }
+
+class AIMealPlanResponse(BaseModel):
+    """Schema for AI-generated meal plan response"""
+    meal_plan: MealPlanCreate
+    reasoning: str  # AI's explanation for the meal plan choices
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "meal_plan": {
+                    "title": "High-Protein Muscle Gain Meal Plan",
+                    "description": "Customized meal plan focusing on protein-rich foods for muscle growth",
+                    "scheduled_date": "2025-04-20T18:07:48.990Z",
+                    "meals": [
+                        {
+                            "name": "Breakfast",
+                            "time": "08:00",
+                            "calories": 600,
+                            "protein": 40,
+                            "carbs": 60,
+                            "fats": 20,
+                            "ingredients": "Egg whites, oatmeal, banana, protein powder"
+                        }
+                    ],
+                    "user_id": 5
+                },
+                "reasoning": "This meal plan is designed to support muscle growth with high-protein foods spread throughout the day..."
+            }
         } 

@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import Calendar from 'react-calendar';
-import '../styles/calendar.css';
+import 'react-calendar/dist/Calendar.css';
+import { Value } from 'react-calendar/dist/cjs/shared/types';
+import AIMealPlanModal from './AIMealPlanModal';
 
 interface Meal {
   name: string;
@@ -11,40 +13,41 @@ interface Meal {
   protein: number;
   carbs: number;
   fats: number;
-  ingredients: string;
+  ingredients: string[];
 }
 
-interface MealPlan {
+interface MealPlanType {
   id: number;
   title: string;
   description: string;
   scheduled_date: string;
   meals: Meal[];
   user_id: number;
-  created_at?: string;
 }
 
 const MealPlan: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [mealPlans, setMealPlans] = useState<MealPlanType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchMealPlans = async () => {
-      try {
-        const response = await api.get('/meal-plans/user');
-        console.log('Fetched meal plans:', response.data);
-        setMealPlans(response.data);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching meal plans:', err);
-        setError('Failed to fetch meal plans');
-        setLoading(false);
-      }
-    };
+  const fetchMealPlans = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/meal-plans/user');
+      setMealPlans(response.data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch meal plans');
+      console.error('Error fetching meal plans:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchMealPlans();
   }, []);
 
@@ -103,39 +106,62 @@ const MealPlan: React.FC = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div>
-              <Calendar
-                onChange={(value) => setSelectedDate(value as Date)}
-                value={selectedDate}
-                tileContent={tileContent}
-                className="miami-calendar w-full rounded-xl border-none bg-[#2a2a4e] text-white"
-              />
+          <div className="flex flex-col md:flex-row gap-6 p-6">
+            <div className="w-full md:w-auto">
+              <div className="miami-card p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold text-white">Meal Plans</h2>
+                  {user?.is_admin && (
+                    <button
+                      onClick={() => setIsAIModalOpen(true)}
+                      className="miami-button-primary"
+                    >
+                      Generate AI Meal Plan
+                    </button>
+                  )}
+                </div>
+                <Calendar
+                  value={selectedDate}
+                  onChange={(value: Value) => {
+                    if (value instanceof Date) {
+                      setSelectedDate(value);
+                    }
+                  }}
+                  className="miami-calendar"
+                  tileClassName={({ date }) => 
+                    getMealPlansForDate(date).length > 0 ? "has-meal-plan" : ""
+                  }
+                  tileContent={({ date }) => {
+                    const plans = getMealPlansForDate(date);
+                    return plans.length > 0 ? (
+                      <div className="meal-plan-indicator">{plans.length}</div>
+                    ) : null;
+                  }}
+                />
+              </div>
             </div>
 
-            <div>
-              <h2 className="text-2xl font-semibold text-white mb-4">
-                Meals for {selectedDate.toLocaleDateString()}
-              </h2>
-
+            <div className="flex-1">
               {loading ? (
-                <div className="text-white/60">Loading meal plans...</div>
-              ) : selectedMealPlans.length > 0 ? (
-                <div className="space-y-4">
-                  {selectedMealPlans.map((plan) => (
-                    <div key={plan.id} className="miami-card p-6">
-                      <h3 className="text-xl font-semibold text-white mb-2">
-                        {plan.title}
-                      </h3>
-                      <p className="text-white/60 mb-4">{plan.description}</p>
-                      
+                <p>Loading...</p>
+              ) : error ? (
+                <p className="text-red-500">{error}</p>
+              ) : (
+                <div className="miami-card p-6">
+                  <h3 className="text-xl font-semibold mb-4">
+                    Meals for {selectedDate.toLocaleDateString()}
+                  </h3>
+                  {getMealPlansForDate(selectedDate).map((plan) => (
+                    <div key={plan.id} className="mb-6">
+                      <h4 className="text-lg font-medium mb-2">{plan.title}</h4>
+                      <p className="text-gray-300 mb-4">{plan.description}</p>
                       <div className="space-y-4">
-                        {plan.meals.map((meal, index) => (
-                          <div key={index} className="bg-black/20 p-4 rounded-xl">
+                        {plan.meals.map((meal: Meal, index: number) => (
+                          <div key={index} className="miami-card-secondary p-4">
                             <div className="flex justify-between items-center mb-3">
-                              <h4 className="text-[#00f0ff] font-medium">
+                              <h5 className="text-[#00f0ff] font-medium">
                                 {meal.name}
-                              </h4>
+                              </h5>
                               <span className="text-white/60">
                                 {meal.time}
                               </span>
@@ -163,7 +189,7 @@ const MealPlan: React.FC = () => {
                             <div>
                               <h5 className="text-white/60 text-sm mb-2">Ingredients:</h5>
                               <p className="text-white/80 whitespace-pre-line">
-                                {meal.ingredients}
+                                {meal.ingredients.join('\n')}
                               </p>
                             </div>
                           </div>
@@ -172,15 +198,17 @@ const MealPlan: React.FC = () => {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="miami-card p-6">
-                  <p className="text-white/60">No meals scheduled for this date.</p>
-                </div>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      <AIMealPlanModal
+        isOpen={isAIModalOpen}
+        onClose={() => setIsAIModalOpen(false)}
+        onMealPlanCreated={fetchMealPlans}
+      />
     </div>
   );
 };

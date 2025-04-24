@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import json
 from cors_config import setup_cors
 import traceback
+from ai_service import generate_meal_plan
 
 # Load environment variables
 load_dotenv()
@@ -538,4 +539,75 @@ def read_assigned_users(
         raise HTTPException(
             status_code=500,
             detail=f"Error fetching assigned users: {str(e)}"
+        )
+
+@app.post("/meal-plans/ai-generate/", response_model=schemas.AIMealPlanResponse)
+async def create_ai_meal_plan(
+    request: schemas.AIMealPlanRequest,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate a meal plan using AI and optionally save it"""
+    try:
+        # Verify the user is an admin
+        if not current_user.is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only admins can generate AI meal plans"
+            )
+        
+        # Verify the target user exists and admin has access
+        target_user = crud.get_user(db, user_id=request.user_id)
+        if not target_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Target user not found"
+            )
+        
+        # If admin has assigned users, verify this user is one of them
+        if current_user.assigned_users and target_user.id not in [u.id for u in current_user.assigned_users]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to create plans for this user"
+            )
+        
+        # Generate the meal plan using AI
+        logger.info(f"Generating AI meal plan for user {request.user_id}")
+        ai_response = generate_meal_plan(request)
+        logger.info("Successfully generated AI meal plan")
+        
+        return ai_response
+        
+    except Exception as e:
+        logger.error(f"Error generating AI meal plan: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating meal plan: {str(e)}"
+        )
+
+@app.post("/meal-plans/ai-generate-and-save/", response_model=schemas.MealPlan)
+async def create_and_save_ai_meal_plan(
+    request: schemas.AIMealPlanRequest,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Generate a meal plan using AI and save it to the database"""
+    try:
+        # Generate the meal plan
+        ai_response = await create_ai_meal_plan(request, current_user, db)
+        
+        # Save the generated meal plan
+        logger.info(f"Saving AI-generated meal plan for user {request.user_id}")
+        created_meal_plan = crud.create_meal_plan(db=db, meal_plan=ai_response.meal_plan)
+        logger.info("Successfully saved AI-generated meal plan")
+        
+        return created_meal_plan
+        
+    except Exception as e:
+        logger.error(f"Error saving AI meal plan: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error saving meal plan: {str(e)}"
         ) 
