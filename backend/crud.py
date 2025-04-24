@@ -147,8 +147,8 @@ def create_workout_plan(db: Session, workout_plan: schemas.WorkoutPlanCreate):
         db_workout_plan = models.WorkoutPlan(
             title=workout_plan.title,
             description=workout_plan.description,
-            exercises=workout_plan.exercises,  # This is already serialized
-            user_id=workout_plan.user_id,  # This is mapped from assigned_user_id
+            exercises=workout_plan.serialize_exercises(),  # Serialize exercises to JSON string
+            user_id=workout_plan.assigned_user_id,  # Use assigned_user_id directly
             scheduled_date=workout_plan.scheduled_date
         )
         
