@@ -67,8 +67,6 @@ class WorkoutPlanBase(BaseModel):
 
 class WorkoutPlanCreate(WorkoutPlanBase):
     """Schema for creating a new workout plan"""
-    assigned_user_id: int
-
     @validator('exercises', pre=True)
     def validate_exercises(cls, v):
         if isinstance(v, str):
