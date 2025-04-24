@@ -18,8 +18,10 @@ interface MealPlan {
   id: number;
   title: string;
   description: string;
-  date: string;
+  scheduled_date: string;
   meals: Meal[];
+  user_id: number;
+  created_at?: string;
 }
 
 const MealPlan: React.FC = () => {
@@ -33,9 +35,11 @@ const MealPlan: React.FC = () => {
     const fetchMealPlans = async () => {
       try {
         const response = await api.get('/meal-plans/user');
+        console.log('Fetched meal plans:', response.data);
         setMealPlans(response.data);
         setLoading(false);
       } catch (err) {
+        console.error('Error fetching meal plans:', err);
         setError('Failed to fetch meal plans');
         setLoading(false);
       }
@@ -46,7 +50,7 @@ const MealPlan: React.FC = () => {
 
   const getMealPlansForDate = (date: Date) => {
     return mealPlans.filter(plan => {
-      const planDate = new Date(plan.date);
+      const planDate = new Date(plan.scheduled_date);
       return planDate.toDateString() === date.toDateString();
     });
   };
