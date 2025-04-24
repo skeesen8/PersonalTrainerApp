@@ -432,27 +432,18 @@ def read_user_workout_plans(
         workout_plans = crud.get_user_workout_plans(db, user_id=current_user.id)
         logger.info(f"Found {len(workout_plans)} workout plans")
         
-        # Validate each workout plan before returning
-        validated_workout_plans = []
-        for workout_plan in workout_plans:
-            try:
-                # Convert to dict and validate through schema
-                workout_plan_dict = {
-                    "id": workout_plan.id,
-                    "title": workout_plan.title,
-                    "description": workout_plan.description,
-                    "scheduled_date": workout_plan.scheduled_date,
-                    "exercises": workout_plan.exercises,  # Already deserialized in crud function
-                    "user_id": workout_plan.user_id,
-                    "created_at": workout_plan.created_at
-                }
-                validated_workout_plan = schemas.WorkoutPlan(**workout_plan_dict)
-                validated_workout_plans.append(validated_workout_plan)
-            except Exception as e:
-                logger.error(f"Error validating workout plan {workout_plan.id}: {str(e)}")
-                continue
-        
-        return validated_workout_plans
+        # Convert workout plans to schema objects
+        return [
+            schemas.WorkoutPlan(
+                id=plan.id,
+                title=plan.title,
+                description=plan.description,
+                scheduled_date=plan.scheduled_date,
+                exercises=plan.exercises,  # Already deserialized in crud function
+                user_id=plan.user_id,
+                created_at=plan.created_at
+            ) for plan in workout_plans
+        ]
         
     except Exception as e:
         logger.error(f"Error fetching workout plans: {str(e)}")
