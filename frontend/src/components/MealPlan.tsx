@@ -53,27 +53,12 @@ const MealPlan: React.FC = () => {
       // Parse the scheduled_date string into a Date object
       const planDate = new Date(plan.scheduled_date);
       
-      // Convert both dates to UTC and set to start of day
-      const planDateUTC = new Date(Date.UTC(
-        planDate.getUTCFullYear(),
-        planDate.getUTCMonth(),
-        planDate.getUTCDate()
-      ));
-      
-      const compareDateUTC = new Date(Date.UTC(
-        date.getUTCFullYear(),
-        date.getUTCMonth(),
-        date.getUTCDate()
-      ));
-      
-      console.log('Comparing dates:', {
-        planOriginal: plan.scheduled_date,
-        planDateUTC: planDateUTC.toISOString(),
-        compareDateUTC: compareDateUTC.toISOString(),
-        isMatch: planDateUTC.getTime() === compareDateUTC.getTime()
-      });
-      
-      return planDateUTC.getTime() === compareDateUTC.getTime();
+      // Compare only the date components (year, month, day)
+      return (
+        planDate.getFullYear() === date.getFullYear() &&
+        planDate.getMonth() === date.getMonth() &&
+        planDate.getDate() === date.getDate()
+      );
     });
   };
 
