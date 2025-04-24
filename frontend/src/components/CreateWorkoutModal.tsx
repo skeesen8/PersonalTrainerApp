@@ -32,7 +32,7 @@ const initialExercise: Exercise = {
 const initialFormData = {
   title: '',
   description: '',
-  date: new Date().toISOString(),
+  scheduled_date: new Date().toISOString(),
   exercises: [{ ...initialExercise }],
   assigned_user_id: ''
 };
@@ -120,7 +120,7 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
       const submissionData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        date: new Date(formData.date).toISOString(),
+        scheduled_date: new Date(formData.scheduled_date).toISOString(),
         assigned_user_id: parseInt(formData.assigned_user_id),
         exercises: formData.exercises.map(exercise => ({
           name: exercise.name.trim(),
@@ -199,8 +199,8 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
             </label>
             <input
               type="datetime-local"
-              value={formData.date.slice(0, 16)}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              value={formData.scheduled_date.slice(0, 16)}
+              onChange={(e) => setFormData({ ...formData, scheduled_date: new Date(e.target.value).toISOString() })}
               className="miami-input"
               required
             />
