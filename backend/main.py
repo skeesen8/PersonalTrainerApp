@@ -321,25 +321,9 @@ def create_workout_plan(
         if current_user.assigned_users and assigned_user.id not in [u.id for u in current_user.assigned_users]:
             raise HTTPException(status_code=403, detail="Not authorized to create plans for this user")
         
-        # Create a dict of the workout plan data
-        workout_plan_data = workout_plan.dict()
-        
-        # Map assigned_user_id to user_id for the database model
-        workout_plan_data['user_id'] = workout_plan_data.pop('assigned_user_id')
-        
-        # Serialize the exercises list to a JSON string
-        try:
-            workout_plan_data['exercises'] = workout_plan.serialize_exercises()
-        except Exception as e:
-            logger.error(f"Error serializing exercises: {str(e)}")
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Failed to serialize exercises: {str(e)}"
-            )
-        
         # Create the workout plan
         try:
-            created_plan = crud.create_workout_plan(db=db, workout_plan=schemas.WorkoutPlanCreate(**workout_plan_data))
+            created_plan = crud.create_workout_plan(db=db, workout_plan=workout_plan)
             logger.info(f"Successfully created workout plan for user {assigned_user.id}")
             return created_plan
         except Exception as e:
