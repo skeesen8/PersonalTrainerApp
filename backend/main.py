@@ -331,14 +331,26 @@ def create_workout_plan(
         try:
             workout_plan_data['exercises'] = workout_plan.serialize_exercises()
         except Exception as e:
+            logger.error(f"Error serializing exercises: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Failed to serialize exercises: {str(e)}"
             )
         
-        return crud.create_workout_plan(db=db, workout_plan=schemas.WorkoutPlanCreate(**workout_plan_data))
+        # Create the workout plan
+        try:
+            created_plan = crud.create_workout_plan(db=db, workout_plan=schemas.WorkoutPlanCreate(**workout_plan_data))
+            logger.info(f"Successfully created workout plan for user {assigned_user.id}")
+            return created_plan
+        except Exception as e:
+            logger.error(f"Error creating workout plan: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to create workout plan: {str(e)}"
+            )
         
     except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
