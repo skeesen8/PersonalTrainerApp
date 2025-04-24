@@ -51,21 +51,29 @@ const MealPlan: React.FC = () => {
   const getMealPlansForDate = (date: Date) => {
     if (!mealPlans) return [];
     
-    const startOfDay = new Date(date);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-
     return mealPlans.filter((plan) => {
       const planDate = new Date(plan.scheduled_date);
-      planDate.setUTCHours(0, 0, 0, 0);
+      
+      const planDateUTC = new Date(Date.UTC(
+        planDate.getUTCFullYear(),
+        planDate.getUTCMonth(),
+        planDate.getUTCDate()
+      ));
+      
+      const compareDateUTC = new Date(Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate()
+      ));
       
       console.log('Comparing dates:', {
-        original: plan.scheduled_date,
-        planDateUTC: planDate.toISOString(),
-        selectedDateUTC: startOfDay.toISOString(),
-        matches: planDate.getTime() === startOfDay.getTime()
+        planOriginal: plan.scheduled_date,
+        planDateUTC: planDateUTC.toISOString(),
+        compareDateUTC: compareDateUTC.toISOString(),
+        isMatch: planDateUTC.getTime() === compareDateUTC.getTime()
       });
-
-      return planDate.getTime() === startOfDay.getTime();
+      
+      return planDateUTC.getTime() === compareDateUTC.getTime();
     });
   };
 
