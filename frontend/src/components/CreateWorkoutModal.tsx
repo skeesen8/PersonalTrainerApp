@@ -46,8 +46,9 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
   useEffect(() => {
     const fetchAssignedUsers = async () => {
       try {
-        const response = await api.get('/users/');
-        setAssignedUsers(response.data.filter((user: User) => user.id !== 1));
+        const response = await api.get('/users/assigned');
+        console.log('Fetched assigned users:', response.data);
+        setAssignedUsers(response.data);
       } catch (err) {
         console.error('Failed to fetch users:', err);
         setError('Failed to fetch users');
