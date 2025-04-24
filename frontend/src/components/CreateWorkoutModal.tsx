@@ -62,9 +62,15 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
 
   const handleExerciseChange = (index: number, field: string, value: string | number) => {
     const newExercises = [...formData.exercises];
+    let parsedValue = value;
+    
+    if (field !== 'name') {
+      parsedValue = Math.max(0, Math.min(Number(value), field === 'weight' ? 2000 : field === 'sets' ? 100 : 1000));
+    }
+    
     newExercises[index] = { 
       ...newExercises[index], 
-      [field]: field === 'name' ? value : Number(value) 
+      [field]: parsedValue
     };
     setFormData({ ...formData, exercises: newExercises });
   };
@@ -90,17 +96,38 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
       return;
     }
 
+    // Validate exercises
+    for (const exercise of formData.exercises) {
+      if (!exercise.name.trim()) {
+        setError('Exercise name cannot be empty');
+        return;
+      }
+      if (exercise.sets <= 0 || exercise.sets > 100) {
+        setError('Sets must be between 1 and 100');
+        return;
+      }
+      if (exercise.reps <= 0 || exercise.reps > 1000) {
+        setError('Reps must be between 1 and 1000');
+        return;
+      }
+      if (exercise.weight < 0 || exercise.weight > 2000) {
+        setError('Weight must be between 0 and 2000 lbs');
+        return;
+      }
+    }
+
     try {
       const submissionData = {
-        ...formData,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
         scheduled_date: new Date(formData.scheduled_date).toISOString(),
         user_id: parseInt(formData.user_id),
-        exercises: JSON.stringify(formData.exercises.map(exercise => ({
-          name: exercise.name,
+        exercises: formData.exercises.map(exercise => ({
+          name: exercise.name.trim(),
           sets: Number(exercise.sets),
           reps: Number(exercise.reps),
           weight: Number(exercise.weight)
-        })))
+        }))
       };
 
       console.log('Submitting workout plan:', submissionData);
@@ -110,7 +137,13 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
       onClose();
     } catch (err: any) {
       console.error('Error creating workout plan:', err);
-      setError(err.response?.data?.detail || 'Failed to create workout plan');
+      if (err.response?.data?.detail) {
+        setError(Array.isArray(err.response.data.detail) 
+          ? err.response.data.detail[0].msg 
+          : err.response.data.detail);
+      } else {
+        setError('Failed to create workout plan');
+      }
     }
   };
 
