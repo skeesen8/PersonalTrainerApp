@@ -118,17 +118,22 @@ def get_user_workout_plans(db: Session, user_id: int, skip: int = 0, limit: int 
     return db.query(models.WorkoutPlan).filter(models.WorkoutPlan.user_id == user_id).offset(skip).limit(limit).all()
 
 def create_workout_plan(db: Session, workout_plan: schemas.WorkoutPlanCreate):
-    db_workout_plan = models.WorkoutPlan(
-        title=workout_plan.title,
-        description=workout_plan.description,
-        exercises=json.dumps([exercise.dict() for exercise in workout_plan.exercises]),
-        user_id=workout_plan.assigned_user_id,
-        scheduled_date=workout_plan.date
-    )
-    db.add(db_workout_plan)
-    db.commit()
-    db.refresh(db_workout_plan)
-    return db_workout_plan
+    try:
+        db_workout_plan = models.WorkoutPlan(
+            title=workout_plan.title,
+            description=workout_plan.description,
+            exercises=workout_plan.serialize_exercises(),
+            user_id=workout_plan.assigned_user_id,
+            scheduled_date=workout_plan.date
+        )
+        db.add(db_workout_plan)
+        db.commit()
+        db.refresh(db_workout_plan)
+        return db_workout_plan
+    except Exception as e:
+        print(f"Error creating workout plan: {str(e)}")
+        db.rollback()
+        raise e
 
 def get_meal_plans(db: Session, skip: int = 0, limit: int = 100):
     """Get all meal plans with deserialized meals"""

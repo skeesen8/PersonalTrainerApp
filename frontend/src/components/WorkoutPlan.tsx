@@ -29,7 +29,7 @@ interface WorkoutPlan {
   description: string;
   scheduled_date: string;
   exercises: Exercise[];
-  user_id: number;
+  assigned_user_id: number;
   created_at?: string;
 }
 
@@ -60,7 +60,18 @@ const WorkoutPlan: React.FC = () => {
   const getWorkoutsForDate = (date: Date) => {
     return workoutPlans.filter(plan => {
       const planDate = new Date(plan.scheduled_date);
-      return planDate.toDateString() === date.toDateString();
+      const planDateStart = new Date(planDate.getFullYear(), planDate.getMonth(), planDate.getDate());
+      const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      
+      console.log('Comparing dates:', {
+        planOriginal: plan.scheduled_date,
+        planParsed: planDate.toISOString(),
+        planDateStart: planDateStart.toISOString(),
+        compareDate: compareDate.toISOString(),
+        isMatch: planDateStart.getTime() === compareDate.getTime()
+      });
+      
+      return planDateStart.getTime() === compareDate.getTime();
     });
   };
 

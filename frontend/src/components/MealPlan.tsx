@@ -51,7 +51,19 @@ const MealPlan: React.FC = () => {
   const getMealPlansForDate = (date: Date) => {
     return mealPlans.filter(plan => {
       const planDate = new Date(plan.scheduled_date);
-      return planDate.toDateString() === date.toDateString();
+      // Set both dates to start of day for comparison
+      const planDateStart = new Date(planDate.getFullYear(), planDate.getMonth(), planDate.getDate());
+      const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      
+      console.log('Comparing dates:', {
+        planOriginal: plan.scheduled_date,
+        planParsed: planDate.toISOString(),
+        planDateStart: planDateStart.toISOString(),
+        compareDate: compareDate.toISOString(),
+        isMatch: planDateStart.getTime() === compareDate.getTime()
+      });
+      
+      return planDateStart.getTime() === compareDate.getTime();
     });
   };
 
