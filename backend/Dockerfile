@@ -15,21 +15,25 @@ RUN apt-get update \
         build-essential \
         libpq-dev \
         gcc \
+        postgresql-client \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first to leverage Docker cache
+# Copy requirements and install dependencies
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application
-COPY . .
+# Copy the application code
+COPY . /app/
 
-# Expose the port
-EXPOSE 8080
+# Create and set up the start script
+RUN echo '#!/bin/bash\n\
+echo "Starting FastAPI application..."\n\
+echo "Using port: $PORT"\n\
+cd /app\n\
+exec uvicorn main:app --host 0.0.0.0 --port $PORT --workers 4' > /app/start.sh \
+    && chmod +x /app/start.sh
 
 # Command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"] 
+CMD ["/app/start.sh"] 
