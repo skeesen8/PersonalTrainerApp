@@ -60,18 +60,27 @@ const WorkoutPlan: React.FC = () => {
   const getWorkoutsForDate = (date: Date) => {
     return workoutPlans.filter(plan => {
       const planDate = new Date(plan.scheduled_date);
-      const planDateStart = new Date(planDate.getFullYear(), planDate.getMonth(), planDate.getDate());
-      const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      
+      const planDateUTC = new Date(Date.UTC(
+        planDate.getUTCFullYear(),
+        planDate.getUTCMonth(),
+        planDate.getUTCDate()
+      ));
+      
+      const compareDateUTC = new Date(Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate()
+      ));
       
       console.log('Comparing dates:', {
         planOriginal: plan.scheduled_date,
-        planParsed: planDate.toISOString(),
-        planDateStart: planDateStart.toISOString(),
-        compareDate: compareDate.toISOString(),
-        isMatch: planDateStart.getTime() === compareDate.getTime()
+        planDateUTC: planDateUTC.toISOString(),
+        compareDateUTC: compareDateUTC.toISOString(),
+        isMatch: planDateUTC.getTime() === compareDateUTC.getTime()
       });
       
-      return planDateStart.getTime() === compareDate.getTime();
+      return planDateUTC.getTime() === compareDateUTC.getTime();
     });
   };
 

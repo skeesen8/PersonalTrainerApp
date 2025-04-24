@@ -77,6 +77,24 @@ class WorkoutPlanCreate(WorkoutPlanBase):
         """Serialize exercises to JSON string for database storage"""
         return json.dumps([exercise.dict() for exercise in self.exercises])
 
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "title": "Sample Workout Plan",
+                "description": "A full body workout routine",
+                "scheduled_date": "2025-04-20T18:07:48.990Z",
+                "exercises": [
+                    {
+                        "name": "Bench Press",
+                        "sets": 3,
+                        "reps": 10,
+                        "weight": 135.0
+                    }
+                ],
+                "assigned_user_id": 5
+            }
+        }
+
 class WorkoutPlan(WorkoutPlanBase):
     id: int
     created_at: datetime

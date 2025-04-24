@@ -112,23 +112,54 @@ def assign_user_to_admin(db: Session, admin_id: int, user_id: int):
         raise
 
 def get_workout_plans(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.WorkoutPlan).offset(skip).limit(limit).all()
+    """Get all workout plans with deserialized exercises"""
+    try:
+        workout_plans = db.query(models.WorkoutPlan).offset(skip).limit(limit).all()
+        # Deserialize exercises for each workout plan
+        for workout_plan in workout_plans:
+            if workout_plan.exercises:
+                workout_plan.exercises = json.loads(workout_plan.exercises)
+        return workout_plans
+    except Exception as e:
+        print(f"Error getting workout plans: {str(e)}")
+        raise
 
 def get_user_workout_plans(db: Session, user_id: int, skip: int = 0, limit: int = 100):
-    return db.query(models.WorkoutPlan).filter(models.WorkoutPlan.user_id == user_id).offset(skip).limit(limit).all()
+    """Get workout plans for a specific user with deserialized exercises"""
+    try:
+        workout_plans = db.query(models.WorkoutPlan).filter(
+            models.WorkoutPlan.user_id == user_id
+        ).offset(skip).limit(limit).all()
+        
+        # Deserialize exercises for each workout plan
+        for workout_plan in workout_plans:
+            if workout_plan.exercises:
+                workout_plan.exercises = json.loads(workout_plan.exercises)
+        return workout_plans
+    except Exception as e:
+        print(f"Error getting user workout plans: {str(e)}")
+        raise
 
 def create_workout_plan(db: Session, workout_plan: schemas.WorkoutPlanCreate):
+    """Create a new workout plan"""
     try:
+        # Create the workout plan model
         db_workout_plan = models.WorkoutPlan(
             title=workout_plan.title,
             description=workout_plan.description,
-            exercises=workout_plan.serialize_exercises(),
-            user_id=workout_plan.assigned_user_id,
-            scheduled_date=workout_plan.date
+            exercises=workout_plan.serialize_exercises(),  # Use the serialize_exercises method
+            user_id=workout_plan.assigned_user_id,  # Use assigned_user_id for user_id
+            scheduled_date=workout_plan.scheduled_date
         )
+        
+        # Add and commit to database
         db.add(db_workout_plan)
         db.commit()
         db.refresh(db_workout_plan)
+        
+        # Deserialize exercises before returning
+        if db_workout_plan.exercises:
+            db_workout_plan.exercises = json.loads(db_workout_plan.exercises)
         return db_workout_plan
     except Exception as e:
         print(f"Error creating workout plan: {str(e)}")
