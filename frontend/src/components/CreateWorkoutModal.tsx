@@ -131,7 +131,8 @@ const CreateWorkoutModal: React.FC<CreateWorkoutModalProps> = ({ isOpen, onClose
       };
 
       console.log('Submitting workout plan:', submissionData);
-      await api.post('/workout-plans/', submissionData);
+      const response = await api.post('/workout-plans/', submissionData);
+      console.log('Workout plan created:', response.data);
       onWorkoutCreated();
       setFormData(initialFormData);
       onClose();
