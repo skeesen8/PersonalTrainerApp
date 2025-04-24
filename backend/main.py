@@ -323,11 +323,31 @@ def create_workout_plan(
         
         # Create the workout plan
         try:
-            created_plan = crud.create_workout_plan(db=db, workout_plan=workout_plan)
+            # Create a dict of the workout plan data
+            workout_plan_data = {
+                "title": workout_plan.title,
+                "description": workout_plan.description,
+                "scheduled_date": workout_plan.scheduled_date,
+                "exercises": workout_plan.serialize_exercises(),
+                "user_id": workout_plan.assigned_user_id
+            }
+            
+            # Create the workout plan in the database
+            db_workout_plan = models.WorkoutPlan(**workout_plan_data)
+            db.add(db_workout_plan)
+            db.commit()
+            db.refresh(db_workout_plan)
+            
+            # Deserialize exercises before returning
+            if db_workout_plan.exercises:
+                db_workout_plan.exercises = json.loads(db_workout_plan.exercises)
+            
             logger.info(f"Successfully created workout plan for user {assigned_user.id}")
-            return created_plan
+            return db_workout_plan
+            
         except Exception as e:
             logger.error(f"Error creating workout plan: {str(e)}")
+            db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to create workout plan: {str(e)}"
