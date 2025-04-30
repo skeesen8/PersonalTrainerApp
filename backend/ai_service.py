@@ -44,9 +44,7 @@ try:
     
     logger.info("Initializing OpenAI client...")
     client = OpenAI(
-        api_key=api_key,
-        max_retries=3,
-        timeout=30.0
+        api_key=api_key
     )
     logger.info("Successfully initialized OpenAI client")
 except Exception as e:
