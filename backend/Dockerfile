@@ -24,7 +24,7 @@ RUN apt-get update \
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir --force-reinstall openai==1.12.0
+    && pip install --no-cache-dir --force-reinstall openai==1.12.0 requests==2.31.0
 
 # Copy the application code
 COPY . .

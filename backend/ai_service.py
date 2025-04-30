@@ -44,7 +44,10 @@ def get_openai_client():
             raise ValueError("OPENAI_API_KEY environment variable is required")
         
         logger.info("Initializing OpenAI client...")
-        client = OpenAI(api_key=api_key)
+        # Create a minimal configuration
+        client = OpenAI()
+        # Set the API key directly
+        client.api_key = api_key
         logger.info("Successfully initialized OpenAI client")
         return client
     except Exception as e:
