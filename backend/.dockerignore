@@ -16,6 +16,7 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -30,14 +31,23 @@ ENV/
 *.swp
 *.swo
 
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.log
+*.sqlite
+*.db
+.env
+.env.*
+!.env.example
+
 # Local development
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-
-# SQLite database
-*.db
 
 # Git
 .git

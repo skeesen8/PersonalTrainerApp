@@ -5,10 +5,22 @@ import os
 from typing import List, Dict, Any
 from schemas import AIMealPlanRequest, AIMealPlanResponse, MealPlanCreate, Meal
 from dotenv import load_dotenv
+import logging
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Load environment variables
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Initialize OpenAI client with error handling
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    logger.error("OPENAI_API_KEY is not set in environment variables")
+    raise ValueError("OPENAI_API_KEY environment variable is required")
+
+client = OpenAI(api_key=api_key)
 
 def generate_meal_plan(request: AIMealPlanRequest) -> AIMealPlanResponse:
     """Generate a meal plan using OpenAI's API with function calling"""
