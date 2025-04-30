@@ -36,12 +36,10 @@ RUN touch __init__.py \
     && touch crud/__init__.py
 
 # Verify the file structure and Python path
-RUN ls -la && \
-    echo "Verifying main.py exists:" && ls -la main.py && \
-    echo "Verifying ai_service.py exists:" && ls -la ai_service.py && \
+RUN echo "Verifying openai package:" && \
+    python -c "import openai; print('OpenAI package version:', openai.__version__); print('OpenAI package location:', openai.__file__)" && \
     echo "Python path:" && python -c "import sys; print('\n'.join(sys.path))" && \
-    echo "Installed packages:" && pip list && \
-    echo "Verifying openai package:" && python -c "import openai; print('OpenAI package version:', openai.__version__); print('OpenAI package location:', openai.__file__)"
+    echo "Installed packages:" && pip list
 
 # Create and set up the start script
 RUN echo '#!/bin/bash\n\

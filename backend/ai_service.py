@@ -17,6 +17,7 @@ if site_packages not in sys.path:
 # Try to import required modules
 try:
     from openai import OpenAI
+    logger.info("Successfully imported OpenAI package")
 except ImportError:
     logger.error("OpenAI package not found, attempting to install...")
     import subprocess
@@ -25,8 +26,9 @@ except ImportError:
 
 try:
     from schemas import AIMealPlanRequest, AIMealPlanResponse, MealPlanCreate, Meal
-except ImportError:
-    logger.error("Failed to import schemas")
+    logger.info("Successfully imported schemas")
+except ImportError as e:
+    logger.error(f"Failed to import schemas: {e}")
     raise
 
 # Load environment variables
@@ -34,12 +36,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize OpenAI client with error handling
-api_key = os.getenv("OPENAI_API_KEY")
-if not api_key:
-    logger.error("OPENAI_API_KEY is not set in environment variables")
-    raise ValueError("OPENAI_API_KEY environment variable is required")
-
-client = OpenAI(api_key=api_key)
+try:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        logger.error("OPENAI_API_KEY is not set in environment variables")
+        raise ValueError("OPENAI_API_KEY environment variable is required")
+    
+    logger.info("Initializing OpenAI client...")
+    client = OpenAI(
+        api_key=api_key,
+        max_retries=3,
+        timeout=30.0
+    )
+    logger.info("Successfully initialized OpenAI client")
+except Exception as e:
+    logger.error(f"Failed to initialize OpenAI client: {e}")
+    raise
 
 def generate_meal_plan(request: AIMealPlanRequest) -> AIMealPlanResponse:
     """Generate a meal plan using OpenAI's API with function calling"""
