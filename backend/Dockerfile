@@ -24,9 +24,9 @@ RUN apt-get update \
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir openai==1.12.0 \
-    && pip list \
-    && python -c "import openai; print('OpenAI package version:', openai.__version__); print('OpenAI package location:', openai.__file__)"
+    && pip install --no-cache-dir --force-reinstall openai==1.12.0 \
+    && pip list | grep openai \
+    && python -c "import openai; print('OpenAI package version:', openai.__version__); print('OpenAI package location:', openai.__file__); print('Python path:', openai.__path__)"
 
 # Copy the application code
 COPY . /app/backend/
@@ -41,7 +41,8 @@ RUN touch /app/backend/__init__.py \
 RUN ls -la /app/backend && \
     echo "Verifying main.py exists:" && ls -la /app/backend/main.py && \
     echo "Verifying ai_service.py exists:" && ls -la /app/backend/ai_service.py && \
-    echo "Python path:" && python -c "import sys; print('\n'.join(sys.path))"
+    echo "Python path:" && python -c "import sys; print('\n'.join(sys.path))" && \
+    echo "Installed packages:" && pip list
 
 # Create and set up the start script
 RUN echo '#!/bin/bash\n\
@@ -52,7 +53,9 @@ echo "Current directory: $(pwd)"\n\
 echo "Contents of /app/backend:"\n\
 ls -la /app/backend\n\
 echo "Verifying openai package:"\n\
-python -c "import openai; print(\"OpenAI package version:\", openai.__version__); print(\"OpenAI package location:\", openai.__file__)"\n\
+python -c "import openai; print(\"OpenAI package version:\", openai.__version__); print(\"OpenAI package location:\", openai.__file__); print(\"Python path:\", openai.__path__)"\n\
+echo "Installed packages:"\n\
+pip list\n\
 cd /app/backend\n\
 exec uvicorn main:app --host 0.0.0.0 --port $PORT --workers 4 --log-level debug' > start.sh \
     && chmod +x start.sh
