@@ -1,7 +1,7 @@
-from openai import OpenAI
+import sys
+import os
 from datetime import datetime
 import json
-import os
 from typing import List, Dict, Any
 from schemas import AIMealPlanRequest, AIMealPlanResponse, MealPlanCreate, Meal
 from dotenv import load_dotenv
@@ -13,6 +13,19 @@ logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
+
+# Add site-packages to Python path
+site_packages = '/usr/local/lib/python3.9/site-packages'
+if site_packages not in sys.path:
+    sys.path.append(site_packages)
+
+try:
+    from openai import OpenAI
+except ImportError:
+    logger.error("OpenAI package not found, attempting to install...")
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "openai==1.12.0"])
+    from openai import OpenAI
 
 # Initialize OpenAI client with error handling
 api_key = os.getenv("OPENAI_API_KEY")

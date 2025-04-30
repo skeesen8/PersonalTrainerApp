@@ -25,10 +25,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir --force-reinstall openai==1.12.0 \
-    && pip list | grep openai \
-    && python -c "import openai; print('OpenAI package version:', openai.__version__); print('OpenAI package location:', openai.__file__); print('Python path:', openai.__path__)"
+    && python -c "import openai; print('OpenAI package version:', openai.__version__); print('OpenAI package location:', openai.__file__); print('Python path:', openai.__path__)" \
+    && pip list | grep openai
 
-# Copy the application code (excluding .env)
+# Copy the application code
 COPY . /app/backend/
 
 # Create __init__.py files to make directories Python packages
@@ -42,7 +42,8 @@ RUN ls -la /app/backend && \
     echo "Verifying main.py exists:" && ls -la /app/backend/main.py && \
     echo "Verifying ai_service.py exists:" && ls -la /app/backend/ai_service.py && \
     echo "Python path:" && python -c "import sys; print('\n'.join(sys.path))" && \
-    echo "Installed packages:" && pip list
+    echo "Installed packages:" && pip list && \
+    echo "Verifying openai package:" && python -c "import openai; print('OpenAI package version:', openai.__version__); print('OpenAI package location:', openai.__file__)"
 
 # Create and set up the start script
 RUN echo '#!/bin/bash\n\
@@ -54,12 +55,8 @@ echo "Contents of /app/backend:"\n\
 ls -la /app/backend\n\
 echo "Verifying openai package:"\n\
 python -c "import openai; print(\"OpenAI package version:\", openai.__version__); print(\"OpenAI package location:\", openai.__file__); print(\"Python path:\", openai.__path__)"\n\
-echo "Verifying OpenAI API key:"\n\
-if [ -z "$OPENAI_API_KEY" ]; then\n\
-    echo "WARNING: OPENAI_API_KEY is not set!"\n\
-else\n\
-    echo "OPENAI_API_KEY is set"\n\
-fi\n\
+echo "Installed packages:"\n\
+pip list\n\
 cd /app/backend\n\
 exec uvicorn main:app --host 0.0.0.0 --port $PORT --workers 4 --log-level debug' > start.sh \
     && chmod +x start.sh
