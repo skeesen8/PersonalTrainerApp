@@ -5,7 +5,7 @@ FROM python:3.9.18-slim-bullseye
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8080
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app/backend
 
 # Set working directory
 WORKDIR /app
@@ -28,18 +28,18 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && python -c "import openai; print('OpenAI package version:', openai.__version__)"
 
 # Copy the application code
-COPY . .
+COPY . /app/backend/
 
 # Create __init__.py files to make directories Python packages
-RUN touch /app/__init__.py \
-    && touch /app/models/__init__.py \
-    && touch /app/schemas/__init__.py \
-    && touch /app/crud/__init__.py
+RUN touch /app/backend/__init__.py \
+    && touch /app/backend/models/__init__.py \
+    && touch /app/backend/schemas/__init__.py \
+    && touch /app/backend/crud/__init__.py
 
 # Verify the file structure
-RUN ls -la /app && \
-    echo "Verifying main.py exists:" && ls -la /app/main.py && \
-    echo "Verifying ai_service.py exists:" && ls -la /app/ai_service.py
+RUN ls -la /app/backend && \
+    echo "Verifying main.py exists:" && ls -la /app/backend/main.py && \
+    echo "Verifying ai_service.py exists:" && ls -la /app/backend/ai_service.py
 
 # Create and set up the start script
 RUN echo '#!/bin/bash\n\
@@ -47,9 +47,9 @@ echo "Starting FastAPI application..."\n\
 echo "Using port: $PORT"\n\
 echo "Python path: $PYTHONPATH"\n\
 echo "Current directory: $(pwd)"\n\
-echo "Contents of /app:"\n\
-ls -la /app\n\
-cd /app\n\
+echo "Contents of /app/backend:"\n\
+ls -la /app/backend\n\
+cd /app/backend\n\
 exec uvicorn main:app --host 0.0.0.0 --port $PORT --workers 4 --log-level debug' > start.sh \
     && chmod +x start.sh
 
