@@ -3,22 +3,18 @@ import os
 from datetime import datetime
 import json
 from typing import List, Dict, Any
-from schemas import AIMealPlanRequest, AIMealPlanResponse, MealPlanCreate, Meal
-from dotenv import load_dotenv
 import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Load environment variables
-load_dotenv()
-
 # Add site-packages to Python path
 site_packages = '/usr/local/lib/python3.9/site-packages'
 if site_packages not in sys.path:
     sys.path.append(site_packages)
 
+# Try to import required modules
 try:
     from openai import OpenAI
 except ImportError:
@@ -26,6 +22,16 @@ except ImportError:
     import subprocess
     subprocess.check_call([sys.executable, "-m", "pip", "install", "openai==1.12.0"])
     from openai import OpenAI
+
+try:
+    from schemas import AIMealPlanRequest, AIMealPlanResponse, MealPlanCreate, Meal
+except ImportError:
+    logger.error("Failed to import schemas")
+    raise
+
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
 
 # Initialize OpenAI client with error handling
 api_key = os.getenv("OPENAI_API_KEY")

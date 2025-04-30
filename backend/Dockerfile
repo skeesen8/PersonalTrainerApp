@@ -5,7 +5,7 @@ FROM python:3.9.18-slim-bullseye
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8080
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app:/usr/local/lib/python3.9/site-packages
 
 # Set working directory
 WORKDIR /app
@@ -55,6 +55,8 @@ echo "Verifying openai package:"\n\
 python -c "import openai; print(\"OpenAI package version:\", openai.__version__); print(\"OpenAI package location:\", openai.__file__)"\n\
 echo "Installed packages:"\n\
 pip list\n\
+echo "Python path:"\n\
+python -c "import sys; print('\n'.join(sys.path))"\n\
 exec uvicorn main:app --host 0.0.0.0 --port $PORT --workers 4 --log-level debug' > start.sh \
     && chmod +x start.sh
 
