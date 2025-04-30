@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip list | grep openai \
     && python -c "import openai; print('OpenAI package version:', openai.__version__); print('OpenAI package location:', openai.__file__); print('Python path:', openai.__path__)"
 
-# Copy the application code
+# Copy the application code (excluding .env)
 COPY . /app/backend/
 
 # Create __init__.py files to make directories Python packages
@@ -54,8 +54,12 @@ echo "Contents of /app/backend:"\n\
 ls -la /app/backend\n\
 echo "Verifying openai package:"\n\
 python -c "import openai; print(\"OpenAI package version:\", openai.__version__); print(\"OpenAI package location:\", openai.__file__); print(\"Python path:\", openai.__path__)"\n\
-echo "Installed packages:"\n\
-pip list\n\
+echo "Verifying OpenAI API key:"\n\
+if [ -z "$OPENAI_API_KEY" ]; then\n\
+    echo "WARNING: OPENAI_API_KEY is not set!"\n\
+else\n\
+    echo "OPENAI_API_KEY is set"\n\
+fi\n\
 cd /app/backend\n\
 exec uvicorn main:app --host 0.0.0.0 --port $PORT --workers 4 --log-level debug' > start.sh \
     && chmod +x start.sh
