@@ -14,6 +14,10 @@ if site_packages not in sys.path:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Load environment variables first
+from dotenv import load_dotenv
+load_dotenv()
+
 # Try to import required modules
 try:
     from fastapi import FastAPI, Depends, HTTPException, status, Request, Response
@@ -23,13 +27,9 @@ try:
     from fastapi.middleware.cors import CORSMiddleware
     from sqlalchemy.orm import Session
     from typing import List
-    from dotenv import load_dotenv
 except ImportError as e:
     logger.error(f"Failed to import required module: {e}")
     raise
-
-# Load environment variables
-load_dotenv()
 
 # Try to import local modules
 try:

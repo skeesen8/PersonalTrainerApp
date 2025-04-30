@@ -35,21 +35,24 @@ except ImportError as e:
 from dotenv import load_dotenv
 load_dotenv()
 
-# Initialize OpenAI client with error handling
-try:
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        logger.error("OPENAI_API_KEY is not set in environment variables")
-        raise ValueError("OPENAI_API_KEY environment variable is required")
-    
-    logger.info("Initializing OpenAI client...")
-    client = OpenAI(
-        api_key=api_key
-    )
-    logger.info("Successfully initialized OpenAI client")
-except Exception as e:
-    logger.error(f"Failed to initialize OpenAI client: {e}")
-    raise
+# Initialize OpenAI client
+def get_openai_client():
+    try:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            logger.error("OPENAI_API_KEY is not set in environment variables")
+            raise ValueError("OPENAI_API_KEY environment variable is required")
+        
+        logger.info("Initializing OpenAI client...")
+        client = OpenAI(api_key=api_key)
+        logger.info("Successfully initialized OpenAI client")
+        return client
+    except Exception as e:
+        logger.error(f"Failed to initialize OpenAI client: {e}")
+        raise
+
+# Create client instance
+client = get_openai_client()
 
 def generate_meal_plan(request: AIMealPlanRequest) -> AIMealPlanResponse:
     """Generate a meal plan using OpenAI's API with function calling"""
