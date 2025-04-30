@@ -1,29 +1,47 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request, Response
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.responses import JSONResponse, PlainTextResponse
-from fastapi.exceptions import RequestValidationError
-from sqlalchemy.orm import Session
-from typing import List
-import models, schemas, crud
-from database import engine, SessionLocal
-from datetime import timedelta
-from auth import create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
-from dependencies import get_db
-import logging
+import sys
 import os
-from dotenv import load_dotenv
-from fastapi.middleware.cors import CORSMiddleware
+from datetime import timedelta
+import logging
 import json
-from cors_config import setup_cors
 import traceback
-from ai_service import generate_meal_plan
+
+# Add site-packages to Python path
+site_packages = '/usr/local/lib/python3.9/site-packages'
+if site_packages not in sys.path:
+    sys.path.append(site_packages)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Try to import required modules
+try:
+    from fastapi import FastAPI, Depends, HTTPException, status, Request, Response
+    from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+    from fastapi.responses import JSONResponse, PlainTextResponse
+    from fastapi.exceptions import RequestValidationError
+    from fastapi.middleware.cors import CORSMiddleware
+    from sqlalchemy.orm import Session
+    from typing import List
+    from dotenv import load_dotenv
+except ImportError as e:
+    logger.error(f"Failed to import required module: {e}")
+    raise
 
 # Load environment variables
 load_dotenv()
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Try to import local modules
+try:
+    import models, schemas, crud
+    from database import engine, SessionLocal
+    from auth import create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
+    from dependencies import get_db
+    from cors_config import setup_cors
+    from ai_service import generate_meal_plan
+except ImportError as e:
+    logger.error(f"Failed to import local module: {e}")
+    raise
 
 # Create FastAPI app
 app = FastAPI(
