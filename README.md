@@ -3,9 +3,11 @@
 <div align="center">
   <br />
   <p>
-    <a href="https://github.com/skeesen8/PersonalTrainerApp"><strong>Explore the docs »</strong></a>
+    <a href="https://personal-trainer-app-topaz.vercel.app/login"><strong>Check Out The Live Version Here »</strong></a>
     <br />
-    <a href="https://personal-trainer-app-topaz.vercel.app/login">Visit Live Webpage></strong></a>
+    <br />
+    <a href="https://github.com/skeesen8/PersonalTrainerApp">Explore the docs »</a>
+    <br />
     <br />
     <a href="https://github.com/skeesen8/PersonalTrainerApp/issues">Report Bug</a>
     ·
