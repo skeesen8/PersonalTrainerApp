@@ -5,6 +5,7 @@
   <p>
     <a href="https://github.com/skeesen8/PersonalTrainerApp"><strong>Explore the docs »</strong></a>
     <br />
+    <a href="https://personal-trainer-app-topaz.vercel.app/login">Visit Live Webpage></strong></a>
     <br />
     <a href="https://github.com/skeesen8/PersonalTrainerApp/issues">Report Bug</a>
     ·
@@ -40,14 +41,16 @@
 
 ## About The Project
 
-A full-stack web application for managing workout plans and meal plans, built with modern web technologies. This application helps personal trainers and their clients manage fitness programs, track progress, and maintain healthy lifestyles.
+A full-stack web application for managing workout plans and meal plans, built with modern web technologies. This application helps personal trainers and their clients manage fitness programs, track progress, and maintain healthy lifestyles by allowing personal trainers to create meal plans anf workout programs that then show up in their client portals respectivly.  Admin access allows coachs to manage their clients and client access allows users to see their workout and meal plans on a daily schedule.  
+
+Feel free to create a user or admin and play around with the functionality. To create an admin use code admin123 when prompted.  
 
 Key Features:
 * User authentication and authorization
 * Admin dashboard for managing workout and meal plans
+* Admins are only able to see the users they created or that are assigned to them
 * User dashboard for viewing assigned plans
 * Workout plan management
-* Meal plan generation using OpenAI
 * Responsive design with Material-UI
 * Real-time progress tracking
 
@@ -147,8 +150,6 @@ For more examples, please refer to the [Documentation](https://github.com/skeese
 See the [open issues](https://github.com/skeesen8/PersonalTrainerApp/issues) for a full list of proposed features and known issues.
 
 ## Contributing
-
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
