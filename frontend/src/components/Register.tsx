@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +16,19 @@ const Register: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
     const { login } = useAuth();
+
+    // Reset form state when component mounts
+    useEffect(() => {
+        setFormData({
+            email: '',
+            password: '',
+            full_name: '',
+            admin_code: '',
+            is_admin: false
+        });
+        setError('');
+        setIsLoading(false);
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,6 +100,7 @@ const Register: React.FC = () => {
                                 value={formData.full_name}
                                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                                 disabled={isLoading}
+                                autoComplete="name"
                             />
                         </div>
 
@@ -104,6 +118,7 @@ const Register: React.FC = () => {
                                 value={formData.email}
                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                 disabled={isLoading}
+                                autoComplete="email"
                             />
                         </div>
 
@@ -121,6 +136,7 @@ const Register: React.FC = () => {
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 disabled={isLoading}
+                                autoComplete="new-password"
                             />
                         </div>
 
@@ -137,6 +153,7 @@ const Register: React.FC = () => {
                                 value={formData.admin_code}
                                 onChange={(e) => setFormData({ ...formData, admin_code: e.target.value })}
                                 disabled={isLoading}
+                                autoComplete="off"
                             />
                         </div>
 

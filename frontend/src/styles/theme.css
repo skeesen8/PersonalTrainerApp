@@ -26,6 +26,11 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold tracking-tight;
   }
+
+  /* Base input styles */
+  input {
+    @apply text-white;
+  }
 }
 
 /* Custom Utility Classes */
@@ -67,8 +72,11 @@
 
   .miami-input {
     @apply w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl
-           placeholder-white/50 focus:outline-none focus:border-[#00f0ff]
-           focus:ring-2 focus:ring-[#00f0ff]/50 transition-all duration-300;
+           text-white placeholder-white/50 
+           focus:outline-none focus:border-[#00f0ff]
+           focus:ring-2 focus:ring-[#00f0ff]/50 
+           transition-all duration-300
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .glass-effect {
@@ -92,13 +100,6 @@
 
   .nav-link-active {
     @apply bg-white/20;
-  }
-
-  /* Dropdown styling */
-  .miami-input {
-    @apply w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl
-           placeholder-white/50 focus:outline-none focus:border-[#00f0ff]
-           focus:ring-2 focus:ring-[#00f0ff]/50 transition-all duration-300;
   }
 
   /* Style the select dropdown */

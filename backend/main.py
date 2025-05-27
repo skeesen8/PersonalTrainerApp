@@ -228,6 +228,7 @@ def read_users_me(current_user: models.User = Depends(get_current_user)):
 @app.post("/users/", response_model=schemas.User)
 async def create_user(
     user: schemas.UserCreate,
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Create a new user"""
@@ -248,7 +249,18 @@ async def create_user(
                     detail="Invalid admin code"
                 )
         
+        # Create the user
         created_user = crud.create_user(db=db, user=user)
+        
+        # If the current user is an admin, automatically assign the new user to them
+        if current_user.is_admin:
+            try:
+                crud.assign_user_to_admin(db, admin_id=current_user.id, user_id=created_user.id)
+                logger.info(f"Automatically assigned user {created_user.id} to admin {current_user.id}")
+            except Exception as e:
+                logger.error(f"Failed to automatically assign user to admin: {str(e)}")
+                # Don't raise an error here, as the user was still created successfully
+        
         logger.info(f"Successfully created user: {user.email}")
         return created_user
 
