@@ -81,8 +81,8 @@ axiosInstance.interceptors.request.use(
             ? 'application/x-www-form-urlencoded'
             : 'application/json');
 
-        // Add authorization header if token exists and not a token request
-        if (token && !config.url?.includes('/token')) {
+        // Add authorization header if token exists and not a token or register request
+        if (token && !config.url?.includes('/token') && !config.url?.includes('/register')) {
             headers.set('Authorization', `Bearer ${token}`);
         }
         
