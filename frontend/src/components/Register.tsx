@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +16,14 @@ const Register: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
     const { login } = useAuth();
+
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -67,7 +75,7 @@ const Register: React.FC = () => {
 
                 {/* Registration Card */}
                 <div className="miami-card p-8 backdrop-blur-xl">
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                         {error && (
                             <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl text-sm text-center">
                                 {error}
@@ -86,8 +94,9 @@ const Register: React.FC = () => {
                                 className="miami-input"
                                 placeholder="Enter your full name"
                                 value={formData.full_name}
-                                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                onChange={handleInputChange}
                                 disabled={isLoading}
+                                autoComplete="name"
                             />
                         </div>
 
@@ -103,8 +112,9 @@ const Register: React.FC = () => {
                                 className="miami-input"
                                 placeholder="Enter your email"
                                 value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                onChange={handleInputChange}
                                 disabled={isLoading}
+                                autoComplete="email"
                             />
                         </div>
 
@@ -120,8 +130,9 @@ const Register: React.FC = () => {
                                 className="miami-input"
                                 placeholder="Create a password"
                                 value={formData.password}
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                onChange={handleInputChange}
                                 disabled={isLoading}
+                                autoComplete="new-password"
                             />
                         </div>
 
@@ -136,8 +147,9 @@ const Register: React.FC = () => {
                                 className="miami-input"
                                 placeholder="Enter admin code if you have one"
                                 value={formData.admin_code}
-                                onChange={(e) => setFormData({ ...formData, admin_code: e.target.value })}
+                                onChange={handleInputChange}
                                 disabled={isLoading}
+                                autoComplete="off"
                             />
                         </div>
 
@@ -148,7 +160,7 @@ const Register: React.FC = () => {
                                 type="checkbox"
                                 className="h-4 w-4 rounded border-white/20 bg-white/10 checked:bg-[#00f0ff]"
                                 checked={formData.is_admin}
-                                onChange={(e) => setFormData({ ...formData, is_admin: e.target.checked })}
+                                onChange={handleInputChange}
                                 disabled={isLoading}
                             />
                             <label htmlFor="is_admin" className="ml-2 block text-sm text-white/80">

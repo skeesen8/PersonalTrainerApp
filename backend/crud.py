@@ -86,7 +86,12 @@ def create_user(db: Session, user: schemas.UserCreate):
 def assign_user_to_admin(db: Session, admin_id: int, user_id: int):
     """Assign a user to an admin"""
     try:
-        admin = db.query(models.User).filter(models.User.id == admin_id).first()
+        # Get admin with assigned_users relationship loaded
+        admin = db.query(models.User).options(
+            joinedload(models.User.assigned_users)
+        ).filter(models.User.id == admin_id).first()
+        
+        # Get user
         user = db.query(models.User).filter(models.User.id == user_id).first()
         
         if not admin or not user:
@@ -101,6 +106,7 @@ def assign_user_to_admin(db: Session, admin_id: int, user_id: int):
         if user not in admin.assigned_users:
             admin.assigned_users.append(user)
             db.commit()
+            db.refresh(admin)  # Refresh to get updated relationships
             print(f"Successfully assigned user {user_id} to admin {admin_id}")
         else:
             print(f"User {user_id} is already assigned to admin {admin_id}")
