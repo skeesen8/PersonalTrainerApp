@@ -73,7 +73,7 @@ const Register: React.FC = () => {
                             </div>
                         )}
 
-                        <div>
+                        <div className="form-group">
                             <label htmlFor="full_name" className="block text-sm font-medium text-white/80 mb-2">
                                 Full Name
                             </label>
@@ -90,7 +90,7 @@ const Register: React.FC = () => {
                             />
                         </div>
 
-                        <div>
+                        <div className="form-group">
                             <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
                                 Email address
                             </label>
@@ -107,7 +107,7 @@ const Register: React.FC = () => {
                             />
                         </div>
 
-                        <div>
+                        <div className="form-group">
                             <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
                                 Password
                             </label>
@@ -124,7 +124,7 @@ const Register: React.FC = () => {
                             />
                         </div>
 
-                        <div>
+                        <div className="form-group">
                             <label htmlFor="admin_code" className="block text-sm font-medium text-white/80 mb-2">
                                 Admin Code (Optional)
                             </label>
