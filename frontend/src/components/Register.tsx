@@ -27,7 +27,7 @@ const Register: React.FC = () => {
             delete api.defaults.headers.common['Authorization'];
 
             // Register the user
-            await api.post('/users/', {
+            const response = await api.post('/users/', {
                 email: formData.email,
                 password: formData.password,
                 full_name: formData.full_name,
@@ -35,20 +35,21 @@ const Register: React.FC = () => {
                 is_admin: formData.is_admin
             });
 
-            // Login after successful registration
-            try {
-                await login(formData.email, formData.password);
-                navigate('/dashboard');
-            } catch (loginErr: any) {
-                console.error('Login error after registration:', loginErr);
-                setError('Registration successful but login failed. Please try logging in manually.');
-                navigate('/login');
+            if (response.data) {
+                // Login after successful registration
+                try {
+                    await login(formData.email, formData.password);
+                    navigate('/dashboard');
+                } catch (loginErr: any) {
+                    console.error('Login error after registration:', loginErr);
+                    setError('Registration successful but login failed. Please try logging in manually.');
+                    navigate('/login');
+                }
             }
         } catch (err: any) {
             console.error('Registration error:', err);
             const errorMessage = err.response?.data?.detail || 'Failed to register. Please try again.';
             setError(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);
-        } finally {
             setIsLoading(false);
         }
     };
