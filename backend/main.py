@@ -228,9 +228,9 @@ def read_users_me(current_user: models.User = Depends(get_current_user)):
 @app.post("/users/", response_model=schemas.User)
 async def create_user(
     user: schemas.UserCreate,
-    current_user: models.User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
-    """Create a new user and automatically assign them to the admin if created by an admin"""
+    """Create a new user"""
     logger.info(f"Creating new user with email: {user.email}")
     with get_db() as db:
         db_user = crud.get_user_by_email(db, email=user.email)
@@ -249,14 +249,6 @@ async def create_user(
                 )
         
         created_user = crud.create_user(db=db, user=user)
-        
-        # If the current user is an admin and the created user is not an admin,
-        # automatically assign the new user to the admin
-        if current_user.is_admin and not created_user.is_admin:
-            logger.info(f"Automatically assigning user {created_user.id} to admin {current_user.id}")
-            crud.assign_user_to_admin(db, admin_id=current_user.id, user_id=created_user.id)
-            db.refresh(created_user)  # Refresh to get updated relationships
-        
         logger.info(f"Successfully created user: {user.email}")
         return created_user
 
