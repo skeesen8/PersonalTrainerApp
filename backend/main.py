@@ -274,6 +274,46 @@ async def create_user(
             detail="An error occurred while creating the user"
         )
 
+@app.post("/register", response_model=schemas.User)
+async def register_user(
+    user: schemas.UserCreate,
+    db: Session = Depends(get_db)
+):
+    """Register a new user (no authentication required)"""
+    logger.info(f"Registering new user with email: {user.email}")
+    
+    try:
+        # Check if email is already registered
+        db_user = crud.get_user_by_email(db, email=user.email)
+        if db_user:
+            logger.warning(f"Email already registered: {user.email}")
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        # Check admin code if user is requesting admin privileges
+        if user.is_admin:
+            ADMIN_CODE = "admin123"  # In production, use environment variable
+            if not user.admin_code or user.admin_code != ADMIN_CODE:
+                logger.warning(f"Invalid admin code attempt for user: {user.email}")
+                raise HTTPException(
+                    status_code=403,
+                    detail="Invalid admin code"
+                )
+        
+        # Create the user
+        created_user = crud.create_user(db=db, user=user)
+        logger.info(f"Successfully registered user: {user.email}")
+        return created_user
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error registering user: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while registering the user"
+        )
+
 @app.get("/users/", response_model=List[schemas.User])
 def read_users(
     skip: int = 0,

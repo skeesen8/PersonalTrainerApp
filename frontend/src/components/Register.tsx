@@ -35,7 +35,7 @@ const Register: React.FC = () => {
             delete api.defaults.headers.common['Authorization'];
 
             // Register the user
-            const response = await api.post('/users/', {
+            const response = await api.post('/register', {
                 email: formData.email,
                 password: formData.password,
                 full_name: formData.full_name,
