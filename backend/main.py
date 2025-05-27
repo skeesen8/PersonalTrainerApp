@@ -228,11 +228,14 @@ def read_users_me(current_user: models.User = Depends(get_current_user)):
 @app.post("/users/", response_model=schemas.User)
 async def create_user(
     user: schemas.UserCreate,
-    current_user: models.User = Depends(get_current_user)
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """Create a new user and automatically assign them to the admin if created by an admin"""
     logger.info(f"Creating new user with email: {user.email}")
-    with get_db() as db:
+    
+    try:
+        # Check if email is already registered
         db_user = crud.get_user_by_email(db, email=user.email)
         if db_user:
             logger.warning(f"Email already registered: {user.email}")
@@ -248,6 +251,7 @@ async def create_user(
                     detail="Invalid admin code"
                 )
         
+        # Create the user
         created_user = crud.create_user(db=db, user=user)
         
         # If the current user is an admin and the created user is not an admin,
@@ -259,6 +263,16 @@ async def create_user(
         
         logger.info(f"Successfully created user: {user.email}")
         return created_user
+        
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error creating user: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while creating the user"
+        )
 
 @app.get("/users/", response_model=List[schemas.User])
 def read_users(
